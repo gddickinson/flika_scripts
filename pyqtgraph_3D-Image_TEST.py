@@ -18,6 +18,82 @@ from OpenGL.GL import *
 import pyqtgraph as pg
 import numpy as np
 from os.path import expanduser, join
+from numpy import moveaxis
+import copy
+from skimage.transform import rescale
+
+def get_transformation_matrix(theta=45):
+    """
+    theta is the angle of the light sheet
+    Look at the pdf in this folder.
+    """
+
+    theta = theta/360 * 2 * np.pi # in radians
+    hx = np.cos(theta)
+    sy = np.sin(theta)
+ 
+    S = np.array([[1, hx, 0],
+                  [0, sy, 0],
+                  [0, 0, 1]])
+
+    return S
+
+
+def get_transformation_coordinates(I, theta):
+    negative_new_max = False
+    S = get_transformation_matrix(theta)
+    S_inv = np.linalg.inv(S)
+    mx, my = I.shape
+
+    four_corners = np.matmul(S, np.array([[0, 0, mx, mx],
+                                          [0, my, 0, my],
+                                          [1, 1, 1, 1]]))[:-1,:]
+    
+    range_x = np.round(np.array([np.min(four_corners[0]), np.max(four_corners[0])])).astype(np.int)
+    range_y = np.round(np.array([np.min(four_corners[1]), np.max(four_corners[1])])).astype(np.int)
+    all_new_coords = np.meshgrid(np.arange(range_x[0], range_x[1]), np.arange(range_y[0], range_y[1]))
+    new_coords = [all_new_coords[0].flatten(), all_new_coords[1].flatten()]
+    new_homog_coords = np.stack([new_coords[0], new_coords[1], np.ones(len(new_coords[0]))])
+    old_coords = np.matmul(S_inv, new_homog_coords)
+    old_coords = old_coords[:-1, :]
+    old_coords = old_coords
+    old_coords[0, old_coords[0, :] >= mx-1] = -1
+    old_coords[1, old_coords[1, :] >= my-1] = -1
+    old_coords[0, old_coords[0, :] < 1] = -1
+    old_coords[1, old_coords[1, :] < 1] = -1
+    new_coords[0] -= np.min(new_coords[0])
+    keep_coords = np.logical_not(np.logical_or(old_coords[0] == -1, old_coords[1] == -1))
+    new_coords = [new_coords[0][keep_coords], new_coords[1][keep_coords]]
+    old_coords = [old_coords[0][keep_coords], old_coords[1][keep_coords]]
+    return old_coords, new_coords
+
+
+def perform_shear_transform(A, shift_factor, interpolate, datatype, theta):
+    #A = moveaxis(A, [1, 3, 2, 0], [0, 1, 2, 3])
+    #A = moveaxis(A, [2, 3, 0, 1], [0, 1, 2, 3])
+    A = moveaxis(A, [0, 3, 1, 2], [0, 1, 2, 3]) 
+    m1, m2, m3, m4 = A.shape
+    if interpolate:
+        A_rescaled = np.zeros((m1*int(shift_factor), m2, m3, m4))
+        for v in np.arange(m4):
+            print('Upsampling Volume #{}/{}'.format(v+1, m4))
+            A_rescaled[:, :, :, v] = rescale(A[:, :, :, v], (shift_factor, 1.), mode='constant', preserve_range=True)
+    else:
+        A_rescaled = np.repeat(A, shift_factor, axis=0)
+    mx, my, mz, mt = A_rescaled.shape
+    I = A_rescaled[:, :, 0, 0]
+    old_coords, new_coords = get_transformation_coordinates(I, theta)
+    old_coords = np.round(old_coords).astype(np.int)
+    new_mx, new_my = np.max(new_coords[0]) + 1, np.max(new_coords[1]) + 1
+
+    D = np.zeros((new_mx, new_my, mz, mt))
+    D[new_coords[0], new_coords[1], :, :] = A_rescaled[old_coords[0], old_coords[1], :, :]
+    #E = moveaxis(D, [0, 1, 2, 3], [3, 1, 2, 0])
+    #E = moveaxis(D, [0, 1, 2, 3], [2, 3, 0, 1])
+    E = moveaxis(D, [0, 1, 2, 3], [0, 3, 1, 2])  
+    E = np.flip(E, 1)
+
+    return E
 
 
 class GLBorderItem(gl.GLAxisItem):
@@ -137,7 +213,9 @@ class GLBorderItem(gl.GLAxisItem):
         glEnd()
         
 ##############################################################################        
-        
+shift_factor = 1
+interpolate = False
+theta = 45       
         
 app = QtGui.QApplication([])
 w = gl.GLViewWidget()
@@ -145,10 +223,17 @@ w.opts['distance'] = 200
 w.show()
 w.setWindowTitle('3D slice - texture plot')
 
-filePath = join(expanduser("~/Desktop"),'array_4D_data.npy')
+filePath = join(expanduser("~/Desktop"),'array_4D_data_roundCell.npy')
 
 data = np.load(filePath)
-data = data[:,10,:,:]
+
+#tData = copy.deepcopy(data)
+transform = perform_shear_transform(data, shift_factor, interpolate, data.dtype, theta)
+#transform = data
+data = transform[:,0,:,:]
+#tShape = tData.shape
+
+#data = data[:,0,:,:]
 shape = data.shape
 
 

@@ -8,7 +8,8 @@ from pyqtgraph.dockarea import *
 from pyqtgraph import mkPen
 
 #filePath = join(expanduser("~/Desktop"),'array_4D_data_bead.npy')
-filePath = join(expanduser("~/Desktop"),'array_4D_data.npy')
+#filePath = join(expanduser("~/Desktop"),'array_4D_data.npy')
+filePath = join(expanduser("~/Desktop"),'array_4D_data_roundCell.npy')
 
 originalData = np.load(filePath)
 dataShape = originalData.shape
@@ -66,7 +67,9 @@ def get_transformation_coordinates(I, theta):
 
 
 def perform_shear_transform(A, shift_factor, interpolate, datatype, theta):
-    A = moveaxis(A, [1, 3, 2, 0], [0, 1, 2, 3])
+    #A = moveaxis(A, [1, 3, 2, 0], [0, 1, 2, 3])
+    #A = moveaxis(A, [2, 3, 0, 1], [0, 1, 2, 3])
+    A = moveaxis(A, [0, 3, 1, 2], [0, 1, 2, 3])    
     m1, m2, m3, m4 = A.shape
     if interpolate:
         A_rescaled = np.zeros((m1*int(shift_factor), m2, m3, m4))
@@ -74,29 +77,32 @@ def perform_shear_transform(A, shift_factor, interpolate, datatype, theta):
             print('Upsampling Volume #{}/{}'.format(v+1, m4))
             A_rescaled[:, :, :, v] = rescale(A[:, :, :, v], (shift_factor, 1.), mode='constant', preserve_range=True)
     else:
-        A_rescaled = np.repeat(A, shift_factor, axis=0)
+        A_rescaled = np.repeat(A, shift_factor, axis=1)
     mx, my, mz, mt = A_rescaled.shape
     I = A_rescaled[:, :, 0, 0]
     old_coords, new_coords = get_transformation_coordinates(I, theta)
     old_coords = np.round(old_coords).astype(np.int)
     new_mx, new_my = np.max(new_coords[0]) + 1, np.max(new_coords[1]) + 1
-    # I_transformed = np.zeros((new_mx, new_my))
-    # I_transformed[new_coords[0], new_coords[1]] = I[old_coords[0], old_coords[1]]
-    # Window(I_transformed)
+
     D = np.zeros((new_mx, new_my, mz, mt))
     D[new_coords[0], new_coords[1], :, :] = A_rescaled[old_coords[0], old_coords[1], :, :]
-    E = moveaxis(D, [0, 1, 2, 3], [3, 1, 2, 0])
+    #E = moveaxis(D, [0, 1, 2, 3], [3, 1, 2, 0])
+    #E = moveaxis(D, [0, 1, 2, 3], [2, 3, 0, 1])
+    E = moveaxis(D, [0, 1, 2, 3], [0, 3, 1, 2])    
     E = np.flip(E, 1)
-    #Window(E[0, :, :, :])
-    E = E.astype(datatype)
+
     return E
 
 
-shift_factor = 3
+shift_factor = 1.5
 interpolate = False
 theta = 45
     
-#originalData= perform_shear_transform(originalData, shift_factor, interpolate, originalData.dtype, theta)
+originalData= perform_shear_transform(originalData, shift_factor, interpolate, originalData.dtype, theta)
+dataShape = originalData.shape
+height = dataShape[3]
+width = dataShape[2]
+
 
 data = originalData[:,0,:,:]
 
