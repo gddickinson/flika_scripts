@@ -10,7 +10,8 @@ from sklearn.neighbors import KDTree
 import numpy as np
 
 #file to load
-fileName = r"C:\Users\g_dic\Dropbox\_forIan\SIM data.csv"
+#fileName = r"C:\Users\g_dic\Dropbox\_forIan\SIM data.csv"
+fileName = "/Users/gdickinson/Dropbox/_forIan/SIM data.csv"
 
 #save path
 saveName = fileName.split('.')[0] + '_NN-Result.csv'
