@@ -121,10 +121,23 @@ def plotTracks(tracksDF):
     
 if __name__ == '__main__':    
     
-    trackFilePath = '/Users/george/Data/10msExposure10s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10_locs_tracksRG_SVMPredicted.csv'
-    tiffFilePath = '/Users/george/Data/10msExposure10s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10.tif'
+    #non-BAPTA
+    #trackFilePath = '/Users/george/Data/10msExposure10s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10_locs_tracksRG_SVMPredicted.csv'
+    #tiffFilePath = '/Users/george/Data/10msExposure10s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10.tif'
+
+    #cropped
+    #trackFilePath = '/Users/george/Data/10msExposure2s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10_crop20_locs_tracksRG_SVMPredicted.csv'
+    #tiffFilePath = '/Users/george/Data/10msExposure2s/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_1_MMStack_Default_bin10_crop20.tif'    
+
+    #non-BAPTA FIXED
+    #trackFilePath = '/Users/george/Data/10msExposure10s_fixed/wt/GB_195_2022_08_31_HTEndothelial_NonBAPTA_Fixed_plate1_1_MMStack_Default_bin10_locs_tracksRG_SVMPredicted.csv'
+    #tiffFilePath = '/Users/george/Data/10msExposure10s_fixed/wt/GB_195_2022_08_31_HTEndothelial_NonBAPTA_Fixed_plate1_1_MMStack_Default_bin10.tif'
     
-    tracksDF = loadPointData(trackFilePath, filterPoints = True, filterType = 'SVM', classType=3)
+    #cropped
+    trackFilePath = '/Users/george/Data/10msExposure2s_fixed/wt/GB_195_2022_08_31_HTEndothelial_NonBAPTA_Fixed_plate1_1_MMStack_Default_bin10_crop20_locs_tracksRG_SVMPredicted.csv'
+    tiffFilePath = '/Users/george/Data/10msExposure2s_fixed/wt/GB_195_2022_08_31_HTEndothelial_NonBAPTA_Fixed_plate1_1_MMStack_Default_bin10_crop20.tif'
+    
+    tracksDF = loadPointData(trackFilePath, filterPoints = False, filterType = 'SVM', classType=1)
     img= loadImgData(tiffFilePath, transpose=False, rotateflip=True)    
     
     fa = start_flika()   

@@ -31,18 +31,34 @@ def addLagDisplacementToDF(trackDF):
     
     #set final track position lags to Nan
     distDF['endValue'] = distDF['track_number'] - distDF['track_number2'] 
-    distDF['mask'] = distDF['endValue'] != -1
+    distDF['mask'] = distDF['endValue'] == 0
     distDF['lag'] = distDF['distance'].where(distDF['mask'])
     
     #add lags to trackDF
     trackDF['lag'] = distDF['lag'] 
 
     #add track mean lag distance to all rows
-    trackDF['meanLag'] = trackDF.groupby('track_number')['lag'].transform('mean')    
-
-    #add 'radius_gyration' (scaled by mean lag displacement
-    trackDF['radius_gyration_scaled'] = trackDF['radius_gyration']/trackDF['meanLag']
+    trackDF['meanLag'] = trackDF.groupby('track_number')['lag'].transform('mean')   
     
+    #add track length for each track row
+    trackDF['track_length'] = trackDF.groupby('track_number')['lag'].transform('sum')   
+
+    #add 'radius_gyration' (scaled by mean lag displacement)
+    trackDF['radius_gyration_scaled'] = trackDF['radius_gyration']/trackDF['meanLag']
+
+    #add 'radius_gyration' (scaled by n_segments)
+    trackDF['radius_gyration_scaled_nSegments'] = trackDF['radius_gyration']/trackDF['n_segments']
+    
+    #add 'radius_gyration' (scaled by n_segments squared)
+    trackDF['radius_gyration_scaled_nSegmentsSqr'] = trackDF['radius_gyration']/np.square(trackDF['n_segments'])    
+
+    #add 'radius_gyration' (scaled by track_length)
+    trackDF['radius_gyration_scaled_trackLength'] = trackDF['radius_gyration']/trackDF['track_length']
+    
+    #add 'radius_gyration' (scaled by track_length squared)
+    trackDF['radius_gyration_scaled_trackLengthSqr'] = trackDF['radius_gyration']/np.square(trackDF['track_length'])  
+    
+            
     return trackDF
 
 
@@ -58,10 +74,12 @@ def processTrackFiles(tracksList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get folder paths
-    tracksList = glob.glob(path + '/**/*_bin10_locs_tracksRG.csv', recursive = True)  
+    #tracksList = glob.glob(path + '/**/*_bin10_locs_tracksRG.csv', recursive = True)  
+    tracksList = glob.glob(path + '/**/*_crop20_locs_tracksRG.csv', recursive = True)  
     
     #process files
     processTrackFiles(tracksList)

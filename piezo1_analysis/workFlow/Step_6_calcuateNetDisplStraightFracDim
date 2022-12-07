@@ -130,8 +130,8 @@ def calcFeatforFiles(tracksList):
             tracksDF = getFeaturesForAllTracksinDF(tracksDF)
         
             #### DROP any Unnamed columns - these shouldn't have been added at earlier step #TODO! #####
-            tracksDF = tracksDF[['track_number', 'frame', 'x', 'y','intensity', 'n_segments', 'radius_gyration', 'asymmetry', 'skewness',
-                                 'kurtosis', 'radius_gyration_scaled', 'track_intensity_mean', 'track_intensity_std', 'lag', 'meanLag',
+            tracksDF = tracksDF[['track_number', 'frame', 'x', 'y','intensity', 'n_segments', 'track_length','radius_gyration', 'asymmetry', 'skewness',
+                                 'kurtosis', 'radius_gyration_scaled','radius_gyration_scaled_nSegments', 'radius_gyration_scaled_nSegmentsSqr','radius_gyration_scaled_trackLength','radius_gyration_scaled_trackLengthSqr', 'track_intensity_mean', 'track_intensity_std', 'lag', 'meanLag',
                                  'fracDimension', 'netDispl', 'Straight']]
             
             #overwrite DF           
@@ -141,7 +141,8 @@ def calcFeatforFiles(tracksList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get folder paths
     tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   

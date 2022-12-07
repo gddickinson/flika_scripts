@@ -11,7 +11,7 @@ import flika
 from flika import global_vars as g
 from flika.window import Window
 from flika.process.file_ import save_file_gui, open_file_gui, open_file, save_file
-from flika.process.stacks import frame_binning
+from flika.process.stacks import trim
 from flika.app.application import FlikaApplication
 
 from qtpy.QtGui import QColor
@@ -31,29 +31,29 @@ import glob
 from tqdm import tqdm
 
 
-def binTiffUsingFlika(tiffFile, binSize):
+def cropTiffUsingFlika(tiffFile, cropSize):
     print('processing {}'.format(os.path.basename(tiffFile)))
     data_window = open_file(tiffFile)
-    bin_window = frame_binning(int(binSize), keepSourceWindow=False)
-    savename = tiffFile.split('.')[0] + '_bin{}.tif'.format(int(binSize))
+    crop_window = trim(0, cropSize, increment=1, delete=False, keepSourceWindow=False)
+    savename = tiffFile.split('.')[0] + '_crop{}.tif'.format(int(cropSize))
     save_file(savename) 
     print('saved {}'.format(os.path.basename(savename)))  
     g.m.clear()
     
 
-def processFolder(path, binSize = 10):
+def processFolder(path, cropSize = 20):
     #get folder paths
     tiffList = glob.glob(path + '/**/*.tif', recursive = True)
     
     for tiffFile in tqdm(tiffList):
-        binTiffUsingFlika(tiffFile, binSize)
+        cropTiffUsingFlika(tiffFile, cropSize)
               
 
 
 if __name__ == '__main__':
     #set top folder level for analysis
-    #path = '/Users/george/Data/10msExposure10s'
-    path = '/Users/george/Data/10msExposure10s_fixed'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
    
     fa = start_flika()
     processFolder(path)

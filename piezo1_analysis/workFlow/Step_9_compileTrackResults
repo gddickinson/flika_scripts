@@ -19,13 +19,19 @@ def getStats(df):
     stats = df.agg(
         {
         'n_segments':['mean','std'],
+        'track_length':['mean','std'],
         'radius_gyration':['mean','std'],
+        'radius_gyration_scaled_nSegments':['mean','std'],
+        'radius_gyration_scaled_nSegmentsSqr':['mean','std'],
+        'radius_gyration_scaled_trackLength':['mean','std'],
+        'radius_gyration_scaled_trackLengthSqr':['mean','std'],                
         'asymmetry':['mean','std'],
         'skewness':['mean','std'],
         'kurtosis':['mean','std'],
         'radius_gyration_scaled':['mean','std'],
         'track_intensity_mean':['mean','std'],
-        'lag':['mean','std'], 'fracDimension':['mean','std'],
+        'lag':['mean','std', 'sum'],
+        'fracDimension':['mean','std'],
         'netDispl':['mean','std'],
         'Straight':['mean','std'],
         'SVMPredictedClass':['mean']
@@ -38,11 +44,16 @@ def getStats(df):
     summaryDF_mean = stats.iloc[0].to_frame(name=exptName).T    
     summaryDF_mean = summaryDF_mean.rename(columns={
             'n_segments':'n_segments_mean',
+            'track_length':'track_length_mean',            
             'radius_gyration':'radius_gyration_mean',
             'asymmetry':'asymmetry_mean',
             'skewness':'skewness_mean',
             'kurtosis':'kurtosis_mean',
             'radius_gyration_scaled':'radius_gyration_scaled_mean',
+            'radius_gyration_scaled_nSegments':'radius_gyration_scaled_nSegments_mean',
+            'radius_gyration_scaled_nSegmentsSqr':'radius_gyration_scaled_nSegmentsSqr_mean',
+            'radius_gyration_scaled_trackLength':'radius_gyration_scaled_trackLength_mean',
+            'radius_gyration_scaled_trackLengthSqr':'radius_gyration_scaled_trackLengthSqr_mean',                       
             'track_intensity_mean':'track_intensity_mean',
             'lag':'lag_mean',
             'fracDimension':'fracDimension_mean',
@@ -55,11 +66,16 @@ def getStats(df):
     summaryDF_std = stats.iloc[1].to_frame(name=exptName).T
     summaryDF_std = summaryDF_std.rename(columns={
             'n_segments':'n_segments_std',
+            'track_length':'track_length_std',              
             'radius_gyration':'radius_gyration_std',
             'asymmetry':'asymmetry_std',
             'skewness':'skewness_std',
             'kurtosis':'kurtosis_std',
             'radius_gyration_scaled':'radius_gyration_scaled_std',
+            'radius_gyration_scaled_nSegments':'radius_gyration_scaled_nSegments_std',
+            'radius_gyration_scaled_nSegmentsSqr':'radius_gyration_scaled_nSegmentsSqr_std',
+            'radius_gyration_scaled_trackLength':'radius_gyration_scaled_trackLength_std',
+            'radius_gyration_scaled_trackLengthSqr':'radius_gyration_scaled_trackLengthSqr_std',
             'track_intensity_mean':'track_intensity_std',
             'lag':'lag_std',
             'fracDimension':'fracDimension_std',
@@ -72,8 +88,11 @@ def getStats(df):
     
     #set column order
     resultDF = resultDF[[
+            'n_tracks',
             'n_segments_mean',
-            'n_segments_std',            
+            'n_segments_std',
+            'track_length_mean',
+            'track_length_std',            
             'radius_gyration_mean',
             'radius_gyration_std',            
             'asymmetry_mean',
@@ -83,7 +102,15 @@ def getStats(df):
             'kurtosis_mean',
             'kurtosis_std',            
             'radius_gyration_scaled_mean',
-            'radius_gyration_scaled_std',            
+            'radius_gyration_scaled_std', 
+            'radius_gyration_scaled_nSegments_mean',
+            'radius_gyration_scaled_nSegments_std',            
+            'radius_gyration_scaled_nSegmentsSqr_mean',
+            'radius_gyration_scaled_nSegmentsSqr_std',
+            'radius_gyration_scaled_trackLength_mean',
+            'radius_gyration_scaled_trackLength_std',            
+            'radius_gyration_scaled_trackLengthSqr_mean',
+            'radius_gyration_scaled_trackLengthSqr_std',            
             'track_intensity_mean',
             'track_intensity_std',            
             'lag_mean',
@@ -100,7 +127,7 @@ def getStats(df):
     return resultDF
 
 def compileTrackResults(exptFolder):
-    trackDF_list = glob.glob(exptFolder + '/**/*_SVMPredicted.csv', recursive = True)  
+    trackDF_list = glob.glob(exptFolder + '/**/*_SVMPredicted_NN.csv', recursive = True)  
 
     statsTable_SVM_1 = pd.DataFrame()
     statsTable_SVM_2 = pd.DataFrame()
@@ -110,7 +137,7 @@ def compileTrackResults(exptFolder):
     for trackFile in tqdm(trackDF_list):
         tempDF = pd.read_csv(trackFile)
         experimentName = tempDF.iloc[0]['Experiment']
-        tempDF = tempDF[['track_number','n_segments', 'radius_gyration', 'asymmetry', 'skewness', 'kurtosis','radius_gyration_scaled', 'track_intensity_mean', 'lag', 'meanLag', 'fracDimension', 'netDispl', 'Straight', 'SVMPredictedClass']]
+        tempDF = tempDF[['track_number','n_segments', 'track_length', 'radius_gyration', 'asymmetry', 'skewness', 'kurtosis','radius_gyration_scaled','radius_gyration_scaled_nSegments', 'radius_gyration_scaled_nSegmentsSqr', 'radius_gyration_scaled_trackLength','radius_gyration_scaled_trackLengthSqr','track_intensity_mean', 'lag', 'meanLag', 'fracDimension', 'netDispl', 'Straight', 'nnDist','SVMPredictedClass']]
         
         #filter by SVM class
         tempDF_SVM_1 = tempDF[tempDF['SVMPredictedClass'] == 1] 
@@ -148,7 +175,8 @@ def compileTrackResults(exptFolder):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get expt folder list
     exptList = glob.glob(path + '/*', recursive = True)   

@@ -17,7 +17,8 @@ import glob
 
 def getFileList(path):
     #get folder paths
-    files = glob.glob(path + '/**/*_bin10.tif', recursive = True)    
+    #files = glob.glob(path + '/**/*_bin10.tif', recursive = True)   
+    files = glob.glob(path + '/**/*_crop20.tif', recursive = True)      # use for cropped files
     fileStr = str(files).replace('[', '')
     fileStr = fileStr.replace(']', '')    
     resStr = fileStr.replace('.tif', '_locs.csv')
@@ -48,7 +49,8 @@ def writeMacro(datapaths,respaths,macroCommand,savepath):
 
 if __name__ == '__main__':
     #set top folder level for analysis
-    path = '/Users/george/Data/10msExposure10s'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
     savepath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/thunderStorm_macro_auto.ijm'
 
     dataPathStr,resPathStr  = getFileList(path)

@@ -38,7 +38,8 @@ def makeLagDF(exptFolder):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    path = '/Users/george/Data/10msExposure2s'    
+    #path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get expt folder list
     exptList = glob.glob(path + '/*', recursive = True)   

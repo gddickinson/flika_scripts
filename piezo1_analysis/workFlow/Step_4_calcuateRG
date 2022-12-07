@@ -89,6 +89,7 @@ def calcRGforFiles(tracksList, minNumberSegments=1):
 
             #add number of segments for each Track row
             tracksDF['n_segments'] = tracksDF.groupby('track_number')['track_number'].transform('count')
+                     
             
             if minNumberSegments !=0:
             #filter by number of track segments
@@ -105,10 +106,12 @@ def calcRGforFiles(tracksList, minNumberSegments=1):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    path = '/Users/george/Data/10msExposure2s'
+    #path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get folder paths
-    tracksList = glob.glob(path + '/**/*_bin10_locs_tracks.csv', recursive = True)   
+    #tracksList = glob.glob(path + '/**/*_bin10_locs_tracks.csv', recursive = True)   
+    tracksList = glob.glob(path + '/**/*_crop20_locs_tracks.csv', recursive = True)   
     
     #run analysis - filter for track lengths > 5
     calcRGforFiles(tracksList, minNumberSegments=5)

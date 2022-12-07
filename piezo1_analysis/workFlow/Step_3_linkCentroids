@@ -406,10 +406,12 @@ if __name__ == '__main__':
 
     fa = start_flika()
             
-    path = '/Users/george/Data/10msExposure10s'
-    
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
+   
     #get folder paths
-    tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
+    #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
+    tiffList = glob.glob(path + '/**/*_crop20.tif', recursive = True)    
     
     #run linking on all tiffs in directory
     linkFiles(tiffList)

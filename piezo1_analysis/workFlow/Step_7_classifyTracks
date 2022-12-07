@@ -115,7 +115,8 @@ def processFiles(tracksList, train_data_path):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/10msExposure10s'
+    #path = '/Users/george/Data/10msExposure2s'
+    path = '/Users/george/Data/10msExposure2s_fixed'
     
     #get folder paths
     tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
