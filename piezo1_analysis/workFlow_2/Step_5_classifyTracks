@@ -53,6 +53,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
             if minVal <= 0:
                 data[col] += (np.abs(minVal) + 1e-15)
         return data
+    
     train_feats = pd.read_csv(Path(train_data_path), sep=',')
     train_feats = train_feats.loc[train_feats['Experiment'] == 'tdTomato_37Degree']
     train_feats = train_feats[['Experiment', 'TrackID', 'NetDispl', 'Straight', 'Asymmetry', 'radiusGyration', 'Kurtosis', 'fracDimension', 'Elected_Label']]
@@ -62,15 +63,18 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state = 0)
     X_train_, X_test_ = prepare_box_cox_data(X_train), prepare_box_cox_data(X_test)
     X_train_, X_test_ = pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(X_train_), columns=X.columns), pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(X_test_), columns=X.columns)
+    
     for col_name in X_train.columns:
         X_train.eval(f'{col_name} = @X_train_.{col_name}')
         X_test.eval(f'{col_name} = @X_test_.{col_name}')
+    
     pipeline_steps = [("pca", decomposition.PCA()), ("scaler", StandardScaler()), ("SVC", SVC(kernel="rbf"))]
     check_params = {
         "pca__n_components" : [3],
         "SVC__C" : [0.1, 0.5, 1, 10, 30, 40, 50, 75, 100, 500, 1000],
         "SVC__gamma" : [0.001, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10., 50.0],
     }
+    
     pipeline = Pipeline(pipeline_steps)
     create_search_grid = GridSearchCV(pipeline, param_grid=check_params, cv=10)
     create_search_grid.fit(X_train, y_train)
@@ -91,8 +95,10 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     X_label = X['Experiment'].iloc[0]
     X_feats = X.iloc[:, 2:]
     X_feats_ = pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(prepare_box_cox_data(X_feats)), columns=X_feats.columns)
+    
     for col_name in X_feats.columns:
         X_feats.eval(f'{col_name} = @X_feats_.{col_name}')
+    
     X_pred = pipeline.predict(X_feats)
     X['SVMPredictedClass'] = X_pred.astype('int')
     X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted.csv'
@@ -116,7 +122,8 @@ def processFiles(tracksList, train_data_path):
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
     #path = '/Users/george/Data/10msExposure2s'
-    path = '/Users/george/Data/10msExposure2s_fixed'
+    #path = '/Users/george/Data/10msExposure2s_fixed'
+    path = '/Users/george/Data/10msExposure2s_test'    
     
     #get folder paths
     tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   

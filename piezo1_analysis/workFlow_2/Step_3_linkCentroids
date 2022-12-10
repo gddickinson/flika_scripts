@@ -250,8 +250,8 @@ def savetracksCSV(points, filename):
     linkedtrack_DF['id'] = linkedtrack_DF['id'] + 1
     
     #convert back to nm
-    linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
-    linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
+    #linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
+    #linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
     
     #save df as csv
     linkedtrack_DF.to_csv(filename, index=False)
