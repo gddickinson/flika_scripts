@@ -101,14 +101,13 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     
     X_pred = pipeline.predict(X_feats)
     X['SVMPredictedClass'] = X_pred.astype('int')
-    X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted.csv'
+    X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted2.csv'
     #X.to_csv(X_outpath, sep=',', index=False)
     
     #add classes to RG file ####GD EDIT
     tracksDF = pd.read_csv(Path(pred_data_path), sep=',')
     tracksDF['Experiment'] = X['Experiment']
     tracksDF['SVM'] = X['SVMPredictedClass']
-    
     tracksDF.to_csv(X_outpath, sep=',', index=None)
 
 
@@ -127,7 +126,7 @@ if __name__ == '__main__':
     path = '/Users/george/Data/10msExposure2s_test'    
     
     #get folder paths
-    tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
+    tracksList = glob.glob(path + '/**/*_tracks2RG2.csv', recursive = True)   
     
     #training data path
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'

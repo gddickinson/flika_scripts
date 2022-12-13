@@ -303,9 +303,9 @@ def calcFeaturesforFiles(tracksList, minNumberSegments=1):
         
         
             #saveRg DF
-            saveName = os.path.splitext(trackFile)[0] + 'RG.csv'
+            saveName = os.path.splitext(trackFile)[0] + 'RG2.csv'
             tracksDF.to_csv(saveName)
-            print('\n new tracks file exported to {}'.format(saveName))    
+            print('\n new tracks file exported to {}'.format(saveName))   
 
 
 if __name__ == '__main__':
@@ -315,8 +315,8 @@ if __name__ == '__main__':
     path = '/Users/george/Data/10msExposure2s_test'
     
     #get folder paths
-    #tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)   
-    tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)   
+    #tracksList = glob.glob(path + '/**/*_locsID2_tracks2.csv', recursive = True)   
+    tracksList = glob.glob(path + '/**/*_locsID2_tracks2.csv', recursive = True)   
     
     #run analysis - filter for track lengths > 5
     calcFeaturesforFiles(tracksList, minNumberSegments=5)

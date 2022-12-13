@@ -107,9 +107,8 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     #add classes to RG file ####GD EDIT
     tracksDF = pd.read_csv(Path(pred_data_path), sep=',')
     tracksDF['Experiment'] = X['Experiment']
-    tracksDF['SVM'] = X['SVMPredictedClass']
-    
-    tracksDF.to_csv(X_outpath, sep=',', index=None)
+    tracksDF['SVMPredictedClass'] = X['SVMPredictedClass']
+    tracksDF.to_csv(X_outpath, sep=',', index=False)
 
 
 def processFiles(tracksList, train_data_path):

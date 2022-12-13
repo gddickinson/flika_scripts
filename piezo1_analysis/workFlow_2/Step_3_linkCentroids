@@ -118,7 +118,7 @@ def load_points(filename, pixelsize = 108):
         return None
 
     pointsDF = pd.read_csv(filename)
-    pointsDF['frame'] = pointsDF['frame'].astype(int) -1    
+    pointsDF['frame'] = pointsDF['frame'].astype(int)    
     pointsDF['x'] = pointsDF['x [nm]'] / pixelsize 
     pointsDF['y'] = pointsDF['y [nm]'] / pixelsize 
     pointsDF = pointsDF[['frame','x','y']]
@@ -253,11 +253,18 @@ def savetracksCSV(points, filename):
     #linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
     #linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
     
-    #save df as csv
-    linkedtrack_DF.to_csv(filename, index=False)
+    #cast frames as int
+    linkedtrack_DF['frame'] = linkedtrack_DF['frame'].astype('int')
     
-    print('CSV file {} saved'.format(filename))
-
+    #round intensity
+    linkedtrack_DF['intensity'] = linkedtrack_DF['intensity'].round(2) 
+    
+    #save df as csv
+    #linkedtrack_DF = linkedtrack_DF.sort_values('id')
+    linkedtrack_DF.to_csv(filename, index=True)
+    
+    print('tracks file {} saved'.format(filename))
+    
 
 class Points(object):
     def __init__(self, txy_pts):
@@ -389,7 +396,7 @@ class Points(object):
 
 
 
-def linkFiles(tiffList, pointsFileID = '_locs.csv', pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 3):
+def linkFiles(tiffList, pointsFileID = '_locsID.csv', pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 3):
     for fileName in tqdm(tiffList):
         
         #set file & save names
