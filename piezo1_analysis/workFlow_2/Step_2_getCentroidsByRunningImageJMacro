@@ -51,8 +51,8 @@ if __name__ == '__main__':
     #set top folder level for analysis
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'
-
+    #path = '/Users/george/Data/10msExposure2s_test'
+    path = '/Users/george/Data/10msExposure2s_new'
     
     
     savepath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/thunderStorm_macro_auto.ijm'

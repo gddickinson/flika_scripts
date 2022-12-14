@@ -13,7 +13,7 @@ from tqdm import tqdm
 import os, glob
 
 
-def filterDFandLocs(dfFile, locsIdentifer='_tracksRG_SVMPredicted.csv', colName='SVM'):
+def filterDFandLocs_SVM3(dfFile, locsIdentifer='_tracksRG_SVMPredicted.csv', colName='SVM'):
     #load df with SVM
     df = pd.read_csv(dfFile)
     #load original locs file
@@ -46,4 +46,4 @@ if __name__ == '__main__':
     exptList = glob.glob(path + '/**/*_SVMPredicted.csv', recursive = True)   
 
     for file in tqdm(exptList):
-        filteredDF, locs, locs_remaining = filterDFandLocs(file)
+        filteredDF, locs, locs_remaining = filterDFandLocs_SVM3(file)

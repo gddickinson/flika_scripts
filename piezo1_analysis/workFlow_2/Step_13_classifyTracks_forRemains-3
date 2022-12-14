@@ -126,10 +126,10 @@ if __name__ == '__main__':
     path = '/Users/george/Data/10msExposure2s_test'    
     
     #get folder paths
-    tracksList = glob.glob(path + '/**/*_tracks2RG2.csv', recursive = True)   
+    tracksList = glob.glob(path + '/**/*_tracks3RG3.csv', recursive = True)   
     
     #training data path
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'
     
     #run analysis
-    classifyTracks(tracksList, trainpath, level='2')
+    classifyTracks(tracksList, trainpath, level='3')

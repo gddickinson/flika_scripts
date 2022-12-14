@@ -407,13 +407,13 @@ class Points(object):
 
 
 
-def linkFiles_2(tiffList, pointsFileID = '_locsID2.csv', pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 5):
+def linkFiles_3(tiffList, pointsFileID = '_locsID3.csv', pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 7):
     for fileName in tqdm(tiffList):
         
         #set file & save names
         pointsFileName = os.path.splitext(fileName)[0] + pointsFileID
-        lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto2.txt'  
-        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks2.csv' 
+        lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto3.txt'  
+        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks3.csv' 
         
         #import tiff to flilka
         data_window = open_file(fileName)
@@ -451,6 +451,6 @@ if __name__ == '__main__':
     tiffList = glob.glob(path + '/**/*_crop20.tif', recursive = True)    
     
     #run linking on all tiffs in directory
-    linkFiles_2(tiffList)
+    linkFiles_3(tiffList, distanceToLink = 7)
     
     fa.close()

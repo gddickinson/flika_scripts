@@ -31,7 +31,7 @@ from tqdm import tqdm
 import os, glob
 
 
-def predict_SPT_class(train_data_path, pred_data_path, exptName):
+def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
     """Computes predicted class for SPT data where
         1:Mobile, 2:Intermediate, 3:Trapped
 
@@ -101,7 +101,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     
     X_pred = pipeline.predict(X_feats)
     X['SVMPredictedClass'] = X_pred.astype('int')
-    X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted.csv'
+    X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted{level}.csv'
     #X.to_csv(X_outpath, sep=',', index=False)
     
     #add classes to RG file ####GD EDIT
@@ -112,11 +112,11 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName):
     tracksDF.to_csv(X_outpath, sep=',', index=None)
 
 
-def processFiles(tracksList, train_data_path):
+def processFiles(tracksList, train_data_path, level=''):
     
     for pred_data_path in tqdm(tracksList):
         exptName = os.path.basename(pred_data_path).split('_MMStack')[0]
-        predict_SPT_class(train_data_path, pred_data_path, exptName)
+        predict_SPT_class(train_data_path, pred_data_path, exptName, level)
     
 
 
