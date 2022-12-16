@@ -112,7 +112,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
     tracksDF.to_csv(X_outpath, sep=',', index=None)
 
 
-def processFiles(tracksList, train_data_path, level=''):
+def classifyTracks(tracksList, train_data_path, level=''):
     
     for pred_data_path in tqdm(tracksList):
         exptName = os.path.basename(pred_data_path).split('_MMStack')[0]
@@ -125,6 +125,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
     path = '/Users/george/Data/10msExposure2s_test'    
+    #path = '/Users/george/Data/10msExposure2s_new'
     
     #get folder paths
     tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
@@ -133,4 +134,4 @@ if __name__ == '__main__':
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'
     
     #run analysis
-    processFiles(tracksList, trainpath)
+    classifyTracks(tracksList, trainpath)

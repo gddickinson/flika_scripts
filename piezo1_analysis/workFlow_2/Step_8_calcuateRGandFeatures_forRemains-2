@@ -312,13 +312,14 @@ if __name__ == '__main__':
     ##### RUN ANALYSIS        
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'
+    #path = '/Users/george/Data/10msExposure2s_test'
+    path = '/Users/george/Data/10msExposure2s_new'
     
     #get folder paths
     #tracksList = glob.glob(path + '/**/*_locsID2_tracks2.csv', recursive = True)   
     tracksList = glob.glob(path + '/**/*_locsID2_tracks2.csv', recursive = True)   
     
     #run analysis - filter for track lengths > 5
-    calcFeaturesforFiles(tracksList, minNumberSegments=5)
+    calcFeaturesforFiles(tracksList, minNumberSegments=4)
             
             

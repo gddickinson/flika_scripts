@@ -55,7 +55,7 @@ if __name__ == '__main__':
     path = '/Users/george/Data/10msExposure2s_new'
     
     
-    savepath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/thunderStorm_macro_auto.ijm'
+    savepath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow_2/thunderStorm_macro_auto.ijm'
 
     dataPathStr,resPathStr  = getFileList(path)
         

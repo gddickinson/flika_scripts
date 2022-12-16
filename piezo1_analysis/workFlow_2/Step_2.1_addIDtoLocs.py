@@ -26,6 +26,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
     path = '/Users/george/Data/10msExposure2s_test'    
+    #path = '/Users/george/Data/10msExposure2s_new'
     
     #get expt folder list
     locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)   
