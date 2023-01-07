@@ -72,8 +72,9 @@ if __name__ == '__main__':
     ##### RUN ANALYSIS        
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'    
+    #path = '/Users/george/Data/10msExposure2s_test'    
     #path = '/Users/george/Data/10msExposure2s_new'
+    path = '/Users/george/Data/tdt'
     
     #get expt folder list
     exptList = glob.glob(path + '/**/*_tracks3RG3_SVMPredicted3.csv', recursive = True)   

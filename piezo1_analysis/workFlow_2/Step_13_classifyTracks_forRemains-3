@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as transforms
 import numpy as np
 import pandas as pd
-import seaborn as sns
+            import seaborn as sns
 from importlib import reload
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.patches import Ellipse
@@ -123,8 +123,9 @@ if __name__ == '__main__':
     ##### RUN ANALYSIS        
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'    
+    #path = '/Users/george/Data/10msExposure2s_test'    
     #path = '/Users/george/Data/10msExposure2s_new'
+    path = '/Users/george/Data/tdt'
     
     #get folder paths
     tracksList = glob.glob(path + '/**/*_tracks3RG3.csv', recursive = True)   

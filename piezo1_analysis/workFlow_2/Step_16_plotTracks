@@ -121,11 +121,15 @@ def plotTracks(tracksDF):
     
 if __name__ == '__main__':    
     
-    trackFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20_SVM-ALL.csv'
-    tiffFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20.tif'
+    #trackFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20_SVM-ALL.csv'
+    #tiffFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20.tif'
+
+    trackFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20_locsID_tracksRG_SVMPredicted.csv'
+    tiffFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20.tif'
+
 
     
-    tracksDF = loadPointData(trackFilePath, filterPoints = True, filterType = 'SVM', classType=3)
+    tracksDF = loadPointData(trackFilePath, filterPoints = False, filterType = 'SVM', classType=3)
     img= loadImgData(tiffFilePath, transpose=False, rotateflip=True)    
     
     fa = start_flika()   

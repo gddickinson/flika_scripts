@@ -443,9 +443,10 @@ if __name__ == '__main__':
             
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'
+    #path = '/Users/george/Data/10msExposure2s_test'
     #path = '/Users/george/Data/10msExposure2s_new'
-   
+    path = '/Users/george/Data/tdt'
+    
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     tiffList = glob.glob(path + '/**/*_crop20.tif', recursive = True)    

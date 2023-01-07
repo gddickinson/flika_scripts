@@ -49,6 +49,20 @@ import math
 from scipy import stats, spatial
 from matplotlib import pyplot as plt
 
+import seaborn as sns
+from importlib import reload
+from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.patches import Ellipse
+from pathlib import Path
+from scipy import stats
+from sklearn import datasets, decomposition, metrics
+from sklearn.svm import SVC
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.decomposition import PCA
+from sklearn.metrics import confusion_matrix, plot_confusion_matrix
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import power_transform, PowerTransformer, StandardScaler
 
 #sys.setrecursionlimit(10000)
 
@@ -177,7 +191,7 @@ def refine_pts(pts, blur_window, sigma, amplitude):
 def flatten(l):
     return [item for sublist in l for item in sublist]    
 
-def savetracksCSV(points, filename):    
+def savetracksCSV(points, filename, locsFileName):    
     tracks = points.tracks
     if isinstance(tracks[0][0], np.int64):
         tracks = [[np.asscalar(a) for a in b] for b in tracks]
@@ -232,23 +246,34 @@ def savetracksCSV(points, filename):
         
 
     #make dataframe of tracks, xy coordianates and intensities for linked tracks  
-    dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'id': txy_indexesByTrack}              
+    dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'file_id': txy_indexesByTrack}              
               
     
     linkedtrack_DF = pd.DataFrame(dict)
     
     #match id to locs file values (starting at 1)
-    linkedtrack_DF['id'] = linkedtrack_DF['id'] + 1
+    
+    #linkedtrack_DF['file_id'] = linkedtrack_DF['file_id'] + 1
+    locs_DF = pd.read_csv(locsFileName)
+    id_list = locs_DF['id'].tolist()
+    file_id_list = linkedtrack_DF['file_id'].tolist()
+    
+    idsForlinkedPoints = [id_list[i] for i in file_id_list]
+
+    linkedtrack_DF['id'] = idsForlinkedPoints 
     
     #convert back to nm
-    #linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
-    #linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
+    linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
+    linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
     
     #cast frames as int
     linkedtrack_DF['frame'] = linkedtrack_DF['frame'].astype('int')
     
     #round intensity
     linkedtrack_DF['intensity'] = linkedtrack_DF['intensity'].round(2) 
+
+    #drop file-id
+    linkedtrack_DF = linkedtrack_DF.drop(['file_id'], axis=1)
     
     #save df as csv
     #linkedtrack_DF = linkedtrack_DF.sort_values('id')
@@ -756,7 +781,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
     tracksDF.to_csv(X_outpath, sep=',', index=None)
 
 
-def classifyTacks(tracksList, train_data_path, level=''):
+def classifyTracks(tracksList, train_data_path, level=''):
     
     for pred_data_path in tqdm(tracksList):
         exptName = os.path.basename(pred_data_path).split('_MMStack')[0]
@@ -856,8 +881,9 @@ if __name__ == '__main__':
     ##### RUN ANALYSIS        
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'   
-    
+    #path = '/Users/george/Data/10msExposure2s_test'   
+    path = '/Users/george/Data/tdt_iterate'   
+
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     tiffList = glob.glob(path + '/**/*_crop20.tif', recursive = True)  
@@ -878,105 +904,38 @@ if __name__ == '__main__':
     for file in tqdm(locsList):
         addID(file)
 
-    ##########################################################################        
-    #STEP 3 link points (3 pixel cutoff)
-    ##########################################################################
-    fa = start_flika()
-                   
-    #run linking on all tiffs in directory
-    linkFiles(tiffList, distanceToLink = 3)
-    
-    fa.close()    
-        
-    ##########################################################################
-    #STEP  4 Calculate RG and Features
-    ##########################################################################
-    #get folder paths 
-    tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)   
-     
-    #run analysis - filter for track lengths > 5
-    calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)   
-    
-    ##########################################################################
-    #STEP  5 Classify Tracks
-    ##########################################################################    
-    #get folder paths
-    tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
-        
-    #run analysis
-    classifyTracks(tracksList, trainpath, level='')
 
-    ##########################################################################
-    #STEP  6 Filter SVM 3
-    ##########################################################################       
-    #get expt folder list
-    exptList = glob.glob(path + '/**/*_SVMPredicted.csv', recursive = True)   
+    #loop through linkage cutt off didstances
+    for distance in tqdm(range(1,21)):
 
-    for file in tqdm(exptList):
-        filterDFandLocs_SVM3(file)
-    
-    ##########################################################################
-    #STEP  7 Relink points (5 pixel distance)
-    ##########################################################################         
-    fa = start_flika()                 
-    
-    #run linking on all tiffs in directory
-    linkFiles(tiffList, distanceToLink = 5, level='2')
-    
-    fa.close()   
+        ##########################################################################        
+        #STEP 3 link points
+        ##########################################################################
+        fa = start_flika()
+                       
+        #run linking on all tiffs in directory
+        linkFiles(tiffList, distanceToLink = distance)
         
-    ##########################################################################
-    #STEP  8 Calculate RG and Features 2
-    ##########################################################################          
-    #get folder paths 
-    tracksList = glob.glob(path + '/**/*_locsID2_tracks2.csv', recursive = True)   
-    
-    #run analysis - filter for track lengths > 5
-    calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)   
-    
-    ##########################################################################
-    #STEP  9 Classify Tracks 2
-    ##########################################################################      
-    #get folder paths
-    tracksList = glob.glob(path + '/**/*_tracks2RG2.csv', recursive = True)   
-    
-    #run analysis
-    classifyTracks(tracksList, trainpath, level='2')  
+        fa.close()    
+            
+        ##########################################################################
+        #STEP  4 Calculate RG and Features
+        ##########################################################################
+        #get folder paths 
+        tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)   
+         
+        #run analysis - filter for track lengths > minLinkSements 
+        calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)   
         
-    ##########################################################################
-    #STEP  10 Filter SVM 2
-    ##########################################################################      
-    #get expt folder list
-    exptList = glob.glob(path + '/**/*_tracks2RG2_SVMPredicted2.csv', recursive = True)   
+        ##########################################################################
+        #STEP  5 Classify Tracks
+        ##########################################################################    
+        #get folder paths
+        tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
+            
+        #run analysis
+        classifyTracks(tracksList, trainpath, level='_cutoff_{}'.format(distance))
+    
 
-    for file in tqdm(exptList):
-        filterDFandLocs_SVM2(file)   
     
-    ##########################################################################
-    #STEP  11 Relink points (7 pixel distance)
-    ##########################################################################         
-    fa = start_flika()
-                   
-    #run linking on all tiffs in directory
-    linkFiles(tiffList, distanceToLink = 7, level='3')
-    
-    fa.close()    
-    
-    ##########################################################################
-    #STEP  12 Calculate RG and Features 3
-    ##########################################################################     
-    #get folder paths  
-    tracksList = glob.glob(path + '/**/*_locsID3_tracks3.csv', recursive = True)   
-    
-    #run analysis - filter for track lengths > 5
-    calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)    
-    
-    ##########################################################################
-    #STEP  13 
-    ##########################################################################      
-    
-    
-    
-    ##########################################################################
-    #STEP  14 
-    ##########################################################################      
+   
