@@ -28,7 +28,8 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_test'    
     #path = '/Users/george/Data/10msExposure2s_new'
     #path = '/Users/george/Data/tdt'
-    path = '/Users/george/Data/tdt_10s' 
+    path = '/Users/george/Data/htag_cutout/gof' 
+    
     
     #get expt folder list
     locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)   

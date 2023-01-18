@@ -42,7 +42,8 @@ def compileSVMresults(path):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS         
-    path = '/Users/george/Data/tdt_iterate' 
+    #path = '/Users/george/Data/tdt_iterate' 
+    path = '/Users/george/Data/simulated_200Frames_highDiff'
     
     resultsDF, statsDF = compileSVMresults(path)
     

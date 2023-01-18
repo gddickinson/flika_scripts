@@ -882,11 +882,13 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
     #path = '/Users/george/Data/10msExposure2s_test'   
-    path = '/Users/george/Data/tdt_iterate'   
+    #path = '/Users/george/Data/tdt_iterate_20s'  
+    path = '/Users/george/Data/simulated_200Frames_highDiff'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
-    tiffList = glob.glob(path + '/**/*_crop20.tif', recursive = True)  
+    #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)  
+    tiffList = glob.glob(path + '/**/*.tif', recursive = True)      
 
     #training data path
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'

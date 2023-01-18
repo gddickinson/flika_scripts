@@ -100,7 +100,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_test'
     #path = '/Users/george/Data/10msExposure2s_new'  
     #path = '/Users/george/Data/tdt'    
-    path = '/Users/george/Data/tdt_5s' 
+    path = '/Users/george/Data/htag_cutout/GB_199_2022_09_01_tracks/gof' 
     
     #get folder paths  
     tracksList = glob.glob(path + '/**/*_locsID.csv', recursive = True)   

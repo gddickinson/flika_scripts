@@ -64,14 +64,29 @@ def loadImgData(tiffFile, transpose=False, rotateflip=True):
     #load image data
     img = io.imread(tiffFile) 
     
-    if transpose == True:
-        #reshape to x,y,t
-        img = np.transpose(img,(1,2,0))
+    shape = img.shape
+
+    if len(shape) == 3:
+    
+        if transpose == True:
+            #reshape to x,y,t
+            img = np.transpose(img,(1,2,0))
+            
+        if rotateflip == True:
+            #rotate and flip for flika
+            img = img[:,:,::-1]
+            img = np.rot90(img, k=1, axes=(1,2))
+            
+    if len(shape) == 2:
         
-    if rotateflip == True:
-        #rotate and flip for flika
-        img = img[:,:,::-1]
-        img = np.rot90(img, k=1, axes=(1,2))
+        if transpose == True:
+            #reshape to x,y,t
+            img = np.transpose(img,(1,0))
+            
+        if rotateflip == True:
+            #rotate and flip for flika
+            img = img[:,::-1]
+            img = np.rot90(img)
     
     return img
 
@@ -102,8 +117,11 @@ def plotDataOnStack(img, points, pixelSize, crop=True):
     pointWindow.updateindex()
     
     
-def plotTracks(tracksDF):
+def plotTracks(tracksDF, background=False, img=None):
     fig1,ax1 = plt.subplots(1, 1, sharex=True, sharey=True)
+    
+    if background:
+        ax1.imshow(img)
                
     groups_points = tracksDF.groupby('track_number')
     for name, group in groups_points:
@@ -113,7 +131,8 @@ def plotTracks(tracksDF):
     #ax1.set_xlim(xaxisMin,xaxisMax)
     #ax1.set_ylim(yaxisMin,yaxisMax)
     
-    ax1.invert_yaxis()                
+    if background == False:
+        ax1.invert_yaxis()                
     ax1.set(xlabel='PositionX [pixels]')
     ax1.set(ylabel='PositionY [pixels]')
 
@@ -124,17 +143,20 @@ if __name__ == '__main__':
     #trackFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20_SVM-ALL.csv'
     #tiffFilePath = '/Users/george/Data/10msExposure2s_new/wt/GB_165_2022_03_01_HTEndothelial_NonBapta_plate1_10_MMStack_Default_bin10_crop20.tif'
 
-    trackFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20_locsID_tracksRG_SVMPredicted.csv'
-    tiffFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20.tif'
+    #trackFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20_locsID_tracksRG_SVMPredicted.csv'
+    #tiffFilePath = '/Users/george/Data/tdt/AL_66_2020-07-28-TIRFM_Diff_tdt-MEFs_A_3_MMStack_Pos0_crop20.tif'
 
-
+    trackFilePath = '/Users/george/Data/htag_cutout/GB_199_2022_09_01_tracks/gof/GB_199_2022_09_01_HTEndothelial_locsID_tracksRG_SVMPredicted_NN.csv'
+    tiffFilePath = '/Users/george/Data/htag_cutout/GB_199_2022_09_01_tracks/gof/GB_199_2022_09_01_HTEndothelial.tif'
+    backgroundIMG_path = '/Users/george/Data/htag_cutout/GB_199_2022_09_01/GB_199_2022_09_01_MaxIntensity.tif'
     
     tracksDF = loadPointData(trackFilePath, filterPoints = False, filterType = 'SVM', classType=3)
     img= loadImgData(tiffFilePath, transpose=False, rotateflip=True)    
+    backgroundIMG = loadImgData(backgroundIMG_path, transpose=False, rotateflip=False)    
     
     fa = start_flika()   
     plotDataOnStack(img, tracksDF, pixelSize)
-    plotTracks(tracksDF)
+    plotTracks(tracksDF, background=True, img=backgroundIMG)
     
     #fa.close()
     
