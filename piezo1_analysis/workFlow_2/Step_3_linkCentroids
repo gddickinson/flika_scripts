@@ -435,12 +435,13 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_test'
     #path = '/Users/george/Data/10msExposure2s_new'
     #path = '/Users/george/Data/tdt'
-    path = '/Users/george/Data/htag_cutout/gof' 
+    path = '/Users/george/Data/nonbapta_dyetitration' 
+
     
     #get folder paths
-    #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
+    tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     #tiffList = glob.glob(path + '/**/*_crop100.tif', recursive = True)    
-    tiffList = glob.glob(path + '/**/*.tif', recursive = True)      
+    #tiffList = glob.glob(path + '/**/*.tif', recursive = True)      
     
     #run linking on all tiffs in directory
     linkFiles(tiffList)

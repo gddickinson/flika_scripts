@@ -28,7 +28,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_test'    
     #path = '/Users/george/Data/10msExposure2s_new'
     #path = '/Users/george/Data/tdt'
-    path = '/Users/george/Data/htag_cutout/gof' 
+    path = '/Users/george/Data/nonbapta_dyetitration' 
     
     
     #get expt folder list

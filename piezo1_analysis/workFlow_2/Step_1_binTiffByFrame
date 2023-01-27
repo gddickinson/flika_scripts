@@ -54,7 +54,7 @@ if __name__ == '__main__':
     #set top folder level for analysis
     #path = '/Users/george/Data/10msExposure10s'
     #path = '/Users/george/Data/10msExposure10s_fixed'
-    path = '/Users/george/Data/10msExposure2s_test'
+    path = '/Users/george/Data/nonbapta_dyetitration/25pm'
     
     fa = start_flika()
     processFolder(path)

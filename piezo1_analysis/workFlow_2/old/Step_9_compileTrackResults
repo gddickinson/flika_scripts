@@ -191,7 +191,8 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s'
     #path = '/Users/george/Data/10msExposure2s_fixed'
     
-    path = '/Users/george/Data/htag_cutout/GB_199_2022_09_01_tracks'   
+    path = '/Users/george/Data/nonbapta_dyetitration' 
+
     
     #get expt folder list
     exptList = glob.glob(path + '/*/', recursive = True)   
