@@ -26,7 +26,7 @@ def addNNtoDF(df, nnDF, pixelSize = 108):
 if __name__ == '__main__':
 
     #path = '/Users/george/Data/tdt'  
-    path = '/Users/george/Data/nonbapta_dyetitration' 
+    path = '/Users/george/Data/htag_cutout_wt/wt' 
 
     
     #add nn to SVM files based on id

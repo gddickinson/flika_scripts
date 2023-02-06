@@ -883,7 +883,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_fixed'
     #path = '/Users/george/Data/10msExposure2s_test'   
     #path = '/Users/george/Data/tdt_iterate_20s'  
-    path = '/Users/george/Data/simulated_200Frames_highDiff'
+    path = '/Users/george/Data/htag_cutout_wt/wt'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
@@ -908,7 +908,7 @@ if __name__ == '__main__':
 
 
     #loop through linkage cutt off didstances
-    for distance in tqdm(range(1,21)):
+    for distance in tqdm(range(3,4)):
 
         ##########################################################################        
         #STEP 3 link points

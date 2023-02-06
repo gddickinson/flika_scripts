@@ -18,9 +18,9 @@ import os
 
 def getFileList(path):
     #get folder paths
-    files = glob.glob(path + '/**/*_bin10.tif', recursive = True)   
+    #files = glob.glob(path + '/**/*_bin10.tif', recursive = True)   
     #files = glob.glob(path + '/**/*_crop100.tif', recursive = True)      # use for cropped files
-    #files = glob.glob(path + '/**/*.tif', recursive = True) 
+    files = glob.glob(path + '/**/*.tif', recursive = True) 
     
     fileStr = str(files).replace('[', '')
     fileStr = fileStr.replace(']', '')    
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #path = '/Users/george/Data/10msExposure2s_test'
     #path = '/Users/george/Data/10msExposure2s_new'
     #path = '/Users/george/Data/tdt'
-    path = '/Users/george/Data/nonbapta_dyetitration'
+    path = '/Users/george/Data/htag_cutout_wt/wt'
     
     savepath = os.path.join(path,'thunderStorm_macro_auto.ijm')
 
