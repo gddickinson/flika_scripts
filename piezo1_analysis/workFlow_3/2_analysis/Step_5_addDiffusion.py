@@ -50,7 +50,7 @@ def addDiffusiontoDF(df):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Data/htag_cutout_wt/wt' 
+    path = '/Users/george/Data/BAPTA/gapSize_10frames'
     
     #add nn to SVM files based on id
     fileList = glob.glob(path + '/**/*_SVMPredicted_NN.csv', recursive = True)     
