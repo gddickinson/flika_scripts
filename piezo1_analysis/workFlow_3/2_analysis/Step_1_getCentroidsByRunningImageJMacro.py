@@ -52,7 +52,7 @@ def writeMacro(datapaths,respaths,macroCommand,savepath):
 
 if __name__ == '__main__':
     #set top folder level for analysis
-    path = '/Users/george/Data/BAPTA/gapSize_10frames'
+    path = '/Users/george/Data/testing'
     
     savepath = os.path.join(path,'thunderStorm_macro_auto.ijm')
 

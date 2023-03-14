@@ -61,7 +61,7 @@ def getNNinFrame(tracksDF, radiusList=[3,5,10,20,30]):
         tracksDF['nnCountInFrame_within_{}_pixels'.format(r)] =  countList
 
     tracksDF = tracksDF.sort_index()
-    print('\r' + 'NNcount-analysis added', end='\r')
+    #print('\r' + 'NNcount-analysis added', end='\r')
 
     return tracksDF
 
@@ -69,10 +69,10 @@ def getNNinFrame(tracksDF, radiusList=[3,5,10,20,30]):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Data/testing'
+    path = '/Users/george/Data/trackpyTest'
     
     #add nn count
-    fileList = glob.glob(path + '/**/*_diffusion_velocity.csv', recursive = True)     
+    fileList = glob.glob(path + '/**/*_velocity_AllLocs.csv', recursive = True)     
     
     for file in tqdm(fileList): 
         

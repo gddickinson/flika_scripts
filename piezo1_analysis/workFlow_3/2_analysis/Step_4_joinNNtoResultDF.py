@@ -27,7 +27,7 @@ def addNNtoDF(df, nnDF, pixelSize = 108):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Data/BAPTA/gapSize_10frames'
+    path = '/Users/george/Data/trackpyTest'
 
     
     #add nn to SVM files based on id

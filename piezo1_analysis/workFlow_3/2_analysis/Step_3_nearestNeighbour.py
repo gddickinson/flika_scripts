@@ -98,11 +98,11 @@ def addNNtoSVMFiles(svmFileList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS           
-    path = '/Users/george/Data/BAPTA/gapSize_10frames'
+    path = '/Users/george/Data/trackpyTest'
 
     
     #get folder paths  
-    tracksList = glob.glob(path + '/**/*_locsID.csv', recursive = True)   
+    tracksList = glob.glob(path + '/**/*_locsID.csv', recursive = True)   #using locs file to measure distances to all detected locs (some removed during linking/feature calc if tracks too short)
     
     #run analysis - filter for track lengths > 5
     calcNNforFiles(tracksList)

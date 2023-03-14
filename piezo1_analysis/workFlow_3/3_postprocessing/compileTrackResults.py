@@ -6,6 +6,9 @@ Created on Mon Nov  7 17:48:04 2022
 @author: george
 """
 
+import warnings
+warnings.simplefilter(action='ignore', category=Warning)
+
 import numpy as np
 import pandas as pd
 
@@ -33,7 +36,14 @@ def getStats(df):
         'netDispl':['mean','std'],
         'Straight':['mean','std'],
         'nnDist': ['mean','std'],
-        'SVM':['mean']
+        'nnDist_inFrame': ['mean','std'],
+        'velocity': ['mean','std'],
+        'direction_Relative_To_Origin': ['mean','std'],
+        'nnCountInFrame_within_3_pixels': ['mean','std'],
+        'nnCountInFrame_within_5_pixels': ['mean','std'],
+        'nnCountInFrame_within_10_pixels': ['mean','std'],
+        'nnCountInFrame_within_20_pixels': ['mean','std'],
+        'nnCountInFrame_within_30_pixels': ['mean','std']
         }
         )
     
@@ -57,7 +67,15 @@ def getStats(df):
             'netDispl':'netDispl_mean',
             'Straight':'Straight_mean',
             'nnDist': 'nnDist_mean',         
-            'SVM': 'SVM_mean'                
+            'nnDist_inFrame': 'nnDist_inFrame_mean',
+            'velocity': 'velocity_mean',
+            'direction_Relative_To_Origin': 'direction_Relative_To_Origin_mean',            
+            'nnCountInFrame_within_3_pixels': 'nnCountInFrame_within_3_pixels_mean',
+            'nnCountInFrame_within_5_pixels': 'nnCountInFrame_within_5_pixels_mean',
+            'nnCountInFrame_within_10_pixels': 'nnCountInFrame_within_10_pixels_mean',
+            'nnCountInFrame_within_20_pixels': 'nnCountInFrame_within_20_pixels_mean',
+            'nnCountInFrame_within_30_pixels': 'nnCountInFrame_within_30_pixels_mean'
+                
             })    
     
     #create df with std values
@@ -77,7 +95,15 @@ def getStats(df):
             'fracDimension':'fracDimension_std',
             'netDispl':'netDispl_std',
             'Straight':'Straight_std', 
-            'nnDist': 'nnDist_std',              
+            'nnDist': 'nnDist_std',
+            'nnDist_inFrame': 'nnDist_inFrame_std',
+            'velocity': 'velocity_std',
+            'direction_Relative_To_Origin': 'direction_Relative_To_Origin_std',  
+            'nnCountInFrame_within_3_pixels': 'nnCountInFrame_within_3_pixels_std',
+            'nnCountInFrame_within_5_pixels': 'nnCountInFrame_within_5_pixels_std',
+            'nnCountInFrame_within_10_pixels': 'nnCountInFrame_within_10_pixels_std',
+            'nnCountInFrame_within_20_pixels': 'nnCountInFrame_within_20_pixels_std',
+            'nnCountInFrame_within_30_pixels': 'nnCountInFrame_within_30_pixels_std'
             })  
     
     resultDF = pd.concat([summaryDF_mean,summaryDF_std], axis=1)
@@ -115,57 +141,94 @@ def getStats(df):
             'Straight_mean',
             'Straight_std',  
             'nnDist_mean',              
-            'nnDist_std',             
-            'SVM_mean'  
-        
+            'nnDist_std',
+            'nnDist_inFrame_mean',
+            'nnDist_inFrame_std',
+            'velocity_mean',
+            'velocity_std',
+            'direction_Relative_To_Origin_mean',
+            'direction_Relative_To_Origin_std',                        
+            'nnCountInFrame_within_3_pixels_mean',
+            'nnCountInFrame_within_3_pixels_std',
+            'nnCountInFrame_within_5_pixels_mean',
+            'nnCountInFrame_within_5_pixels_std',
+            'nnCountInFrame_within_10_pixels_mean',
+            'nnCountInFrame_within_10_pixels_std',
+            'nnCountInFrame_within_20_pixels_mean',
+            'nnCountInFrame_within_20_pixels_std',
+            'nnCountInFrame_within_30_pixels_mean',
+            'nnCountInFrame_within_30_pixels_std'       
         ]]
     return resultDF
 
-def compileTrackResults(exptFolder, SVMclass = 'ALL'):
-    trackDF_list = glob.glob(exptFolder + '/**/*_SVMPredicted3_SVM-{}.csv'.format(SVMclass), recursive = True)  
+def compileTrackResults(exptFolder, analysisStage = 'NNcount'):
+     
+    experiment = os.path.basename(exptFolder)
+    print('-------------------')
+    print('expt:  {}'.format(experiment))
 
-    statsTable = pd.DataFrame()
+    conditionList = glob.glob(exptFolder + '/*', recursive = False) 
 
-       
-    #add mean values to each experiments df
-    for trackFile in tqdm(trackDF_list):
-        tempDF = pd.read_csv(trackFile)
-        experimentName = tempDF.iloc[0]['Experiment']
-        tempDF = tempDF[['track_number','n_segments', 'track_length', 'radius_gyration', 'asymmetry', 'skewness', 'kurtosis','radius_gyration_scaled','radius_gyration_scaled_nSegments', 'radius_gyration_scaled_trackLength','intensity', 'lag', 'meanLag', 'fracDimension', 'netDispl', 'Straight', 'nnDist','SVM']]
+    for conditionType in conditionList:
+        condition = os.path.basename(conditionType)
+        #skip ACTINRICM folders
+        if 'ACTINRICM' in condition or 'DICERRICM' in condition:
+            continue
+        print('-------------------')            
+        print('condition:  {}'.format(condition))
+
+        #make empty stats table for condition
+        statsTable = pd.DataFrame()
+        #get files with track analysis
+        trackDF_list = glob.glob(conditionType + '/*_{}.csv'.format(analysisStage), recursive = False)    
+        #print(trackDF_list)
+    
+    
+        #add mean values to each experiments df
+        for trackFile in tqdm(trackDF_list):
+            tempDF = pd.read_csv(trackFile)
+            experimentName = tempDF.iloc[0]['Experiment']
+            
+            #exclude unlinked points
+            tempDF = tempDF[~pd.isnull(tempDF['track_number'])]
         
-        #get mean values for each track
-        resultDF = tempDF.groupby('track_number', as_index=False).mean()
-        
-        resultDF['Experiment'] = experimentName
-        
-        #export track tables        
-        resultDF.to_csv(trackFile.split('.csv')[0]+'_trackStats.csv')
-        
-        #stats for all tracks
-        statsTable = statsTable.append(getStats(resultDF))
+            
+            #print(experimentName)
+            tempDF = tempDF[['track_number','n_segments', 'track_length', 'radius_gyration',
+                             'asymmetry', 'skewness', 'kurtosis','radius_gyration_scaled',
+                             'radius_gyration_scaled_nSegments', 'radius_gyration_scaled_trackLength',
+                             'intensity', 'lag', 'fracDimension', 'netDispl', 'Straight',
+                             'nnDist','SVM', 'nnDist_inFrame','velocity', 'direction_Relative_To_Origin',
+                             'nnCountInFrame_within_3_pixels', 'nnCountInFrame_within_5_pixels','nnCountInFrame_within_10_pixels',
+                             'nnCountInFrame_within_20_pixels','nnCountInFrame_within_30_pixels']]
+            
+            #use absolute straightness values for stats
+            tempDF['Straight'] = tempDF['Straight'].abs()
+            
+            #get mean values for each track
+            resultDF = tempDF.groupby('track_number', as_index=False).mean()
+            #add experiment name to df
+            resultDF['Experiment'] = experimentName            
+            #export track tables        
+            resultDF.to_csv(trackFile.split('.csv')[0]+'_trackMeans.csv')
+            print('{} trackMeans exported'.format(experimentName))
+            
+            #stats for all tracks
+            statsTable = statsTable.append(getStats(resultDF))
 
-
-
-    #export stats tables   
-    exptType = exptFolder.split('/')[-1]
-    statsTable.to_csv(os.path.join(exptFolder,exptType+'SVM-{}_trackStats.csv'.format(SVMclass)))
-  
-
-    print('{} stats exported'.format(exptType))    
+        #export stats tables   
+        statsTable.to_csv(os.path.join(exptFolder,'{}_trackStats.csv'.format(condition)))
+          
+        print('{} stats exported'.format(condition))    
         
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    #path = '/Users/george/Data/10msExposure2s'
-    #path = '/Users/george/Data/10msExposure2s_fixed'
-    path = '/Users/george/Data/nonbapta_dyetitration' 
- 
-    #path = '/Users/george/Data/10msExposure2s_new'    
-    
+    path = r'/Users/george/Data/testingCompilationGabbyFolderStructure' 
+       
     #get expt folder list
-    exptList = glob.glob(path + '/*', recursive = True)   
+    exptList = glob.glob(path + '/*', recursive = False)   
 
     for exptFolder in tqdm(exptList):
-        compileTrackResults(exptFolder, SVMclass = '1')
-        compileTrackResults(exptFolder, SVMclass = '2')
-        compileTrackResults(exptFolder, SVMclass = '3')
+        compileTrackResults(exptFolder, analysisStage = 'NNcount')
+

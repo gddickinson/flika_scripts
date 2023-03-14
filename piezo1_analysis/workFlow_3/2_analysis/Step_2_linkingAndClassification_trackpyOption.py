@@ -12,6 +12,8 @@ Created on Tue Dec 13 15:25:24 2022
 import warnings
 warnings.simplefilter(action='ignore', category=Warning)
 
+import numba
+
 import numpy as np
 import pandas as pd
 
@@ -66,6 +68,8 @@ from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import power_transform, PowerTransformer, StandardScaler
+
+import skimage.io as skio
 
 #sys.setrecursionlimit(10000)
 
@@ -645,6 +649,43 @@ def getNN(tracksDF):
 
     return tracksDF
 
+
+def getIntensities(dataArray, pts):
+    #intensities retrieved from image stack using point data (converted from floats to ints)
+    
+    n, w, h = dataArray.shape
+    
+    #clear intensity list
+    intensities = []
+    
+    for point in pts:
+        frame = int(round(point[0]))
+        x = int(round(point[1]))
+        y = int(round(point[2]))
+        
+        #set x,y bounds for 3x3 pixel square
+        xMin = x - 1
+        xMax = x + 2
+        
+        yMin = y - 1
+        yMax = y + 2
+        
+        #deal with edge cases
+        if xMin < 0:
+            xMin = 0
+        if xMax > w:
+            xMax = w
+            
+        if yMin <0:
+            yMin = 0
+        if yMax > h:
+            yMax = h
+        
+        #get mean pixels values for 3x3 square - background subtract using frame min intensity as estimate of background
+        intensities.append((np.mean(dataArray[frame][xMin:xMax,yMin:yMax]) - np.min(dataArray[frame])))
+    
+    return intensities
+
 def calcFeaturesforFiles(tracksList, minNumberSegments=1):
     for trackFile in tqdm(tracksList):
                 
@@ -859,7 +900,7 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
         lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)  
         tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level) 
-        
+             
         #import tiff to flilka
         data_window = open_file(fileName)
         #import points
@@ -879,11 +920,78 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         #close flika windows        
         SLD_hist.close()
         g.m.clear()  
+        return
 
+
+def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLink = 3, level='', linkingType='standard', maxDistance=5):
+    #try loading trackpy
+    try:
+        import trackpy as tp    
+    except:
+        print("trackpy installation not detected. Install instructions at 'http://soft-matter.github.io/trackpy/v0.5.0/installation.html' ")
+        return
+
+    #pixels in nm
+    pixelSize = pixelSize *1000
+
+    for fileName in tqdm(tiffList):
+        
+        #set file & save names
+        pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
+        #lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)  
+        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level) 
+        
+        #turn off trackpy messages
+        tp.quiet()
+        #load locs file
+        locs = pd.read_csv(pointsFileName)        
+        #convert coordinates to pixels
+        locs['x'] = locs['x [nm]'] / pixelSize
+        locs['y'] = locs['y [nm]'] / pixelSize       
+        #drop unneeded cols
+        locs = locs[['frame', 'x', 'y', 'id', 'x [nm]', 'y [nm]']]
+        
+        #link points
+        if linkingType=='standard':
+            # standard linking
+            tracks = tp.link(locs, distanceToLink, memory=skipFrames)
+            
+        if linkingType=='adaptive':
+            # adaptive linking
+            tracks = tp.link(locs, maxDistance, adaptive_stop=0.1, adaptive_step=0.95, memory=gapSize) 
+
+        if linkingType=='velocityPredict':
+            # adaptive linking using velocity prediction
+            pred = tp.predict.NearestVelocityPredict()
+            tracks = pred.link_df(locs, distance, memory=gapSize)   
+
+        if linkingType=='adaptive + velocityPredict':
+            # adaptive linking using velocity prediction
+            pred = tp.predict.NearestVelocityPredict()
+            tracks = pred.link_df(locs, distance, memory=gapSize, adaptive_stop=0.1, adaptive_step=0.95)           
+               
+        #get background subtracted intensity for each point
+        A = skio.imread(fileName, plugin='tifffile')
+        pts = tracks[['frame','x','y']]
+        pts['frame'] = pts['frame']-1
+        pts = pts.to_numpy()
+        intensities = getIntensities(A, pts)
+        tracks['intensity'] = intensities
+        
+        #rename cols to match pynsight
+        tracks['track_number'] = tracks['particle']         
+        #sort by track_number and frame
+        tracks = tracks.sort_values(by=['track_number', 'frame'])        
+        #reorder columns and drop particles
+        tracks = tracks[['track_number','frame', 'x', 'y','intensity', 'id', 'x [nm]', 'y [nm]']]        
+        #Save tracks
+        tracks.to_csv(tracksSaveName)            
+        print('tracks file {} saved'.format(tracksSaveName))
+    return
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
-    path = '/Users/george/Data/BAPTA/gapSize_10frames'
+    path = '/Users/george/Data/trackpyTest'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
@@ -897,13 +1005,20 @@ if __name__ == '__main__':
     minLinkSegments = 2
 
     #max number of gap frames to skip
-    gapSize = 10
+    gapSize = 1
 
     #max distance in pixels to allow a linkage
     distance = 3
     
     #pixel size
     pixelSize_new = 0.108
+    
+    #trackpy options
+    #linkingType = 'standard'
+    #linkingType = 'adaptive'
+    #linkingType = 'velocityPredict'    
+    linkingType = 'adaptive + velocityPredict'    
+    maxSearchDistance = 6 #for adaptive search
 
     ##########################################################################
     #STEP 2.1 Add IDs to locs file
@@ -922,12 +1037,20 @@ if __name__ == '__main__':
     ##########################################################################        
     #STEP 3 link points
     ##########################################################################
-    fa = start_flika()
-                   
-    #run linking on all tiffs in directory
-    linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
     
-    fa.close()    
+# =============================================================================
+#     # LINK USING FLIKA (Kyle's code)
+#     fa = start_flika()
+#                    
+#     #run linking on all tiffs in directory
+#     linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
+#     
+#     fa.close() 
+# =============================================================================
+    
+    # LINK USING TRACKPY
+    linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)    
+    
         
     ##########################################################################
     #STEP  4 Calculate RG and Features
