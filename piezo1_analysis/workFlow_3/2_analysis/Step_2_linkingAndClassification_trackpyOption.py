@@ -659,9 +659,9 @@ def getIntensities(dataArray, pts):
     intensities = []
     
     for point in pts:
-        frame = int(round(point[0]))
-        x = int(round(point[1]))
-        y = int(round(point[2]))
+        frame = round(point[0])
+        x = round(point[1])
+        y = round(point[2])
         
         #set x,y bounds for 3x3 pixel square
         xMin = x - 1
@@ -682,7 +682,7 @@ def getIntensities(dataArray, pts):
             yMax = h
         
         #get mean pixels values for 3x3 square - background subtract using frame min intensity as estimate of background
-        intensities.append((np.mean(dataArray[frame][xMin:xMax,yMin:yMax]) - np.min(dataArray[frame])))
+        intensities.append((np.mean(dataArray[frame][yMin:yMax,xMin:xMax]) - np.min(dataArray[frame])))
     
     return intensities
 
@@ -973,7 +973,7 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
         #get background subtracted intensity for each point
         A = skio.imread(fileName, plugin='tifffile')
         pts = tracks[['frame','x','y']]
-        pts['frame'] = pts['frame']-1
+        #pts['frame'] = pts['frame']-1
         pts = pts.to_numpy()
         intensities = getIntensities(A, pts)
         tracks['intensity'] = intensities
