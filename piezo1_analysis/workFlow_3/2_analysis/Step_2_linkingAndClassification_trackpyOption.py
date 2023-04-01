@@ -198,7 +198,7 @@ def refine_pts(pts, blur_window, sigma, amplitude):
 def flatten(l):
     return [item for sublist in l for item in sublist]    
 
-def savetracksCSV(points, filename, locsFileName):    
+def savetracksCSV(points, filename, locsFileName, noLocsFile=False):    
     tracks = points.tracks
     if isinstance(tracks[0][0], np.int64):
         tracks = [[np.asscalar(a) for a in b] for b in tracks]
@@ -236,7 +236,8 @@ def savetracksCSV(points, filename, locsFileName):
 
         intensitiesList =list(txy_intensities[k] for k in indices)
         
-        indexList =list(txy_indexes[l] for l in indices)       
+        if noLocsFile == False:
+            indexList =list(txy_indexes[l] for l in indices)       
         
         for pts in ptsList:
             trackNumber.append(i)
@@ -247,28 +248,34 @@ def savetracksCSV(points, filename, locsFileName):
 
         for intensity in intensitiesList:
             txy_intensitiesByTrack.append(intensity)
-            
-        for ind in indexList:
-            txy_indexesByTrack.append(ind)
+        
+        if noLocsFile == False:
+            for ind in indexList:
+                txy_indexesByTrack.append(ind)
         
 
-    #make dataframe of tracks, xy coordianates and intensities for linked tracks  
-    dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'file_id': txy_indexesByTrack}              
-              
-    
+    #make dataframe of tracks, xy coordianates and intensities for linked tracks
+    if noLocsFile == False:
+        dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'file_id': txy_indexesByTrack}              
+    else:
+        dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack}
+        
     linkedtrack_DF = pd.DataFrame(dict)
+         
+    if noLocsFile == False:    
+        #match id to locs file values (starting at 1)
+        
+        #linkedtrack_DF['file_id'] = linkedtrack_DF['file_id'] + 1
+        locs_DF = pd.read_csv(locsFileName)
+        id_list = locs_DF['id'].tolist()
+        file_id_list = linkedtrack_DF['file_id'].tolist()
+        
+        idsForlinkedPoints = [id_list[i] for i in file_id_list]
     
-    #match id to locs file values (starting at 1)
-    
-    #linkedtrack_DF['file_id'] = linkedtrack_DF['file_id'] + 1
-    locs_DF = pd.read_csv(locsFileName)
-    id_list = locs_DF['id'].tolist()
-    file_id_list = linkedtrack_DF['file_id'].tolist()
-    
-    idsForlinkedPoints = [id_list[i] for i in file_id_list]
-
-    linkedtrack_DF['id'] = idsForlinkedPoints 
-    
+        linkedtrack_DF['id'] = idsForlinkedPoints 
+    else:
+        linkedtrack_DF['id'] = linkedtrack_DF.index
+        
     #convert back to nm
     linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
     linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
@@ -280,14 +287,16 @@ def savetracksCSV(points, filename, locsFileName):
     linkedtrack_DF['intensity'] = linkedtrack_DF['intensity'].round(2) 
 
     #drop file-id
-    linkedtrack_DF = linkedtrack_DF.drop(['file_id'], axis=1)
+    if noLocsFile == False:    
+        linkedtrack_DF = linkedtrack_DF.drop(['file_id'], axis=1)
     
     #save df as csv
     #linkedtrack_DF = linkedtrack_DF.sort_values('id')
     linkedtrack_DF.to_csv(filename, index=True)
-    
+
+            
     print('tracks file {} saved'.format(filename))
-    
+  
 
 class Points(object):
     def __init__(self, txy_pts):
@@ -390,7 +399,7 @@ class Points(object):
         #clear intensity list
         self.intensities = []
         
-        for point in self.txy_pts:
+        for point in tqdm(self.txy_pts):
             frame = int(round(point[0]))
             x = int(round(point[1]))
             y = int(round(point[2]))
@@ -416,7 +425,28 @@ class Points(object):
             #get mean pixels values for 3x3 square - background subtract using frame min intensity as estimate of background
             self.intensities.append((np.mean(dataArray[frame][xMin:xMax,yMin:yMax]) - np.min(dataArray[frame])))
 
-    
+def skip_refinePoints(txy_pts):
+    if txy_pts is None:
+        return None
+    new_pts = []
+    for pt in txy_pts:
+                    #    t,  old x, old y, new_x, new_y, sigma, amplitude
+        new_pts.append([pt[0], pt[1], pt[2], pt[1], pt[2], -1, -1])
+    pts_refined = np.array(new_pts)
+    return pts_refined
+
+
+def loadtracksjson(filename):
+    obj_text = codecs.open(filename, 'r', encoding='utf-8').read()
+    pts = json.loads(obj_text)
+    txy_pts = np.array(pts['txy_pts'])
+    txy_pts = txy_pts
+
+    txy_pts = skip_refinePoints(txy_pts)
+    points = Points(txy_pts)
+    points.tracks = pts['tracks']
+    points.get_tracks_by_frame()
+    return points     
 
 # Radius of Gyration and Asymmetry
 def RadiusGyrationAsymmetrySkewnessKurtosis(trackDF):
@@ -901,7 +931,7 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)  
         tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level) 
              
-        #import tiff to flilka
+        #import tiff to flika
         data_window = open_file(fileName)
         #import points
         txy_pts = load_points(pointsFileName)            
@@ -920,8 +950,41 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         #close flika windows        
         SLD_hist.close()
         g.m.clear()  
-        return
+    return
 
+
+def importJSON(tiffList, pixelSize = 0.108, level=''):
+    for fileName in tqdm(tiffList):
+        
+        #set file & save names
+        jsonFileName = os.path.splitext(fileName)[0] + '{}.json'.format(level)        
+        #pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
+        lagsHistoSaveName = os.path.splitext(fileName)[0] + '_lagsHisto{}.txt'.format(level)  
+        tracksSaveName = os.path.splitext(fileName)[0] + '_locsID_tracks{}.csv'.format(level) 
+             
+        #import tiff to flika
+        data_window = open_file(fileName)
+        #import points
+         
+        p =loadtracksjson(jsonFileName)
+        print('tracks loaded')
+        #link points
+        #p.link_pts(skipFrames,distanceToLink)
+        
+        #get background subtracted intensity for each point
+        p.getIntensities(data_window.imageArray())
+        
+        #save tracks
+        tracks = p.tracks
+        savetracksCSV(p, tracksSaveName, None, noLocsFile=True)
+        #export SLD histogram
+        #SLD_hist = SLD_Histogram(p, pixelSize, frameLength)
+        #SLD_hist.export_histogram(autoSave = True, autoFileName = lagsHistoSaveName)
+        
+        #close flika windows        
+        #SLD_hist.close()
+        g.m.clear() 
+    
 
 def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLink = 3, level='', linkingType='standard', maxDistance=5):
     #try loading trackpy
@@ -968,7 +1031,7 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
         if linkingType=='adaptive + velocityPredict':
             # adaptive linking using velocity prediction
             pred = tp.predict.NearestVelocityPredict()
-            tracks = pred.link_df(locs, distance, memory=gapSize, adaptive_stop=0.1, adaptive_step=0.95)           
+            tracks = pred.link_df(locs, maxDistance, memory=gapSize, adaptive_stop=0.1, adaptive_step=0.95)           
                
         #get background subtracted intensity for each point
         A = skio.imread(fileName, plugin='tifffile')
@@ -992,6 +1055,7 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
 if __name__ == '__main__':
     ##### RUN ANALYSIS        
     path = '/Users/george/Data/trackpyTest'
+    path = '/Users/george/Data/alan_jsonFiles'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
@@ -1024,10 +1088,10 @@ if __name__ == '__main__':
     #STEP 2.1 Add IDs to locs file
     ##########################################################################
     #get expt folder list
-    locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)   
+    # locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)   
 
-    for file in tqdm(locsList):
-        addID(file)
+    # for file in tqdm(locsList):
+    #     addID(file)
 
 
     # #loop through linkage cut off didstances
@@ -1049,7 +1113,15 @@ if __name__ == '__main__':
 # =============================================================================
     
     # LINK USING TRACKPY
-    linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)    
+    #linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)    
+
+
+    ##########################################################################
+    #IMPORT POINTS AND TRACKS FROM JSON (INSTEAD OF PREVIOUS STEPS)
+    #fa = start_flika()
+    #importJSON(tiffList, pixelSize = pixelSize_new)
+    #fa.close() 
+    ##########################################################################
     
         
     ##########################################################################
