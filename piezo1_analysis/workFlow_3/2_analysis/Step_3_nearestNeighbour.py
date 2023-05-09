@@ -23,9 +23,15 @@ from matplotlib import pyplot as plt
 
 
 def getNearestNeighbors(train,test,k=2):
-    tree = KDTree(train, leaf_size=5)   
-    dist, ind = tree.query(test, k=k)
-    #dist.reshape(np.size(dist),)     
+    tree = KDTree(train, leaf_size=5)
+    if k > len(train):
+        #no neighbours to count return nan
+        a = np.empty((k,k))
+        a[:] = np.nan
+        return np.nan, np.nan
+    else:
+        dist, ind = tree.query(test, k=k)
+    #dist.reshape(np.size(dist),)
     return dist, ind
 
 def getNN(tracksDF):
@@ -41,9 +47,12 @@ def getNN(tracksDF):
         #filter by frame
         frameXY = tracksDF[tracksDF['frame'] == frame][['x [nm]','y [nm]']].to_numpy()
         #nearest neighbour
-        distances, indexes = getNearestNeighbors(frameXY,frameXY, k=2)   
+        distances, indexes = getNearestNeighbors(frameXY,frameXY, k=2)
         #append distances and indexes of 1st neighbour to list
-        nnDistList.extend(distances[:,1])
+        if (np.isnan(distances).any()):
+            nnDistList.append(np.nan)
+        else:
+            nnDistList.extend(distances[:,1])
         #nnIndexList.extend(indexes[:,1])
         print('\r' + 'NN analysis complete for frame{} of {}'.format(i,len(frames)), end='\r')
 
@@ -56,60 +65,59 @@ def getNN(tracksDF):
 
     return tracksDF
 
-def calcNNforFiles(tracksList, minNumberSegments=1):
+def calcNNforFiles(tracksList):
     for trackFile in tqdm(tracksList):
-                
-            ##### load data
-            tracksDF = pd.read_csv(trackFile)
-            
-            #add nearest neigbours to df
-            tracksDF = getNN(tracksDF)
-            
-            #just keep nn info
-            tracksDF = tracksDF[['id', 'frame', 'x [nm]', 'y [nm]', 'nnDist_inFrame']]
-            
-            #save
-            saveName = os.path.splitext(trackFile)[0] + '_NN.csv'
-            tracksDF.to_csv(saveName)
-            print('\n new tracks file exported to {}'.format(saveName))   
+
+        ##### load data
+        tracksDF = pd.read_csv(trackFile)
+
+        #add nearest neigbours to df
+        tracksDF = getNN(tracksDF)
+
+        #just keep nn info
+        tracksDF = tracksDF[['id', 'frame', 'x [nm]', 'y [nm]', 'nnDist_inFrame']]
+
+        #save
+        saveName = os.path.splitext(trackFile)[0] + '_NN.csv'
+        tracksDF.to_csv(saveName)
+        print('\n new tracks file exported to {}'.format(saveName))
 
 
 def addNNtoSVMFiles(svmFileList):
-    for svmFile in tqdm(svmFileList):  
+    for svmFile in tqdm(svmFileList):
         ##### load svm
-        svmDF = pd.read_csv(svmFile) 
+        svmDF = pd.read_csv(svmFile)
         ##### load locID_NN
         nnFile = svmFile.split('_SVM-ALL.csv')[0] + '_locsID_NN.csv'
-        nnDF = pd.read_csv(nnFile) 
+        nnDF = pd.read_csv(nnFile)
         nnDF = nnDF[['id','nnDist_inFrame']]
         nnDF['nnDist_inFrame'] = nnDF['nnDist_inFrame'] / 108
-        #nnDF['x2'] = nnDF['x [nm]'] / 108        
-        #nnDF['y2'] = nnDF['y [nm]'] / 108  
-        
+        #nnDF['x2'] = nnDF['x [nm]'] / 108
+        #nnDF['y2'] = nnDF['y [nm]'] / 108
+
         #join df based on id
         svmDF = svmDF.join(nnDF.set_index('id'), on='id')
-        
+
         #save
         saveName = os.path.splitext(svmFile)[0] + '_NN.csv'
         svmDF.to_csv(saveName)
-        print('\n NN-file exported to {}'.format(saveName))  
-    
-    
+        print('\n NN-file exported to {}'.format(saveName))
+
+
 
 if __name__ == '__main__':
-    ##### RUN ANALYSIS           
-    path = '/Users/george/Data/trackpyTest'
+    ##### RUN ANALYSIS
+    path = '/Users/george/Data/step3Error'
 
-    
-    #get folder paths  
+
+    #get folder paths
     tracksList = glob.glob(path + '/**/*_locsID.csv', recursive = True)   #using locs file to measure distances to all detected locs (some removed during linking/feature calc if tracks too short)
-    
-    #run analysis - filter for track lengths > 5
+
+    #run analysis
     calcNNforFiles(tracksList)
-    
+
     #add nn to SVM files based on id
-    svmFileList = glob.glob(path + '/**/*_SVM-ALL.csv', recursive = True)     
+    svmFileList = glob.glob(path + '/**/*_SVM-ALL.csv', recursive = True)
     addNNtoSVMFiles(svmFileList)
-    
-    
-    
+
+

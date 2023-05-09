@@ -6,7 +6,7 @@ Created on Tue Dec 13 15:25:24 2022
 @author: george
 """
 
-%matplotlib qt 
+%matplotlib qt
 %gui qt
 
 import warnings
@@ -132,15 +132,15 @@ def load_points(filename, pixelsize = 108):
         return None
 
     pointsDF = pd.read_csv(filename)
-    pointsDF['frame'] = pointsDF['frame'].astype(int)    
-    pointsDF['x'] = pointsDF['x [nm]'] / pixelsize 
-    pointsDF['y'] = pointsDF['y [nm]'] / pixelsize 
+    pointsDF['frame'] = pointsDF['frame'].astype(int)
+    pointsDF['x'] = pointsDF['x [nm]'] / pixelsize
+    pointsDF['y'] = pointsDF['y [nm]'] / pixelsize
     pointsDF = pointsDF[['frame','x','y']]
     all_pts = pointsDF.to_numpy()
 
     print('--- Point Data loaded ---')
     print(pointsDF)
-    
+
     return all_pts
 
 
@@ -196,107 +196,107 @@ def refine_pts(pts, blur_window, sigma, amplitude):
 
 
 def flatten(l):
-    return [item for sublist in l for item in sublist]    
+    return [item for sublist in l for item in sublist]
 
-def savetracksCSV(points, filename, locsFileName, noLocsFile=False):    
+def savetracksCSV(points, filename, locsFileName, noLocsFile=False):
     tracks = points.tracks
     if isinstance(tracks[0][0], np.int64):
         tracks = [[np.asscalar(a) for a in b] for b in tracks]
     txy_pts = points.txy_pts.tolist()
-    
+
     txy_intensities = points.intensities
-    
+
     txy_indexes = flatten(points.pts_idx_by_frame)
 
-    
+
     #filter tracks list to only include linked tracks
     linkedTracks = [item for item in tracks if len(item) > 1]
-    
-    
+
+
     #get xy coordinates and intensities for linked tracks
     trackNumber = []
 
     txy_intensitiesByTrack = []
-    
+
     txy_indexesByTrack = []
 
-    
+
     # for i, indices in enumerate(linkedTracks):
     #     trackNumber.append( i )
     #     txy_ptsByTrack.append(list(txy_pts[j] for j in indices))
     #     #txy_intensitiesByTrack.append(list(txy_intensities[k] for k in indices))
 
-    
+
     frameList = []
     xList = []
     yList = []
 
-    for i, indices in enumerate(linkedTracks):            
+    for i, indices in enumerate(linkedTracks):
         ptsList = list(txy_pts[j] for j in indices)
 
         intensitiesList =list(txy_intensities[k] for k in indices)
-        
+
         if noLocsFile == False:
-            indexList =list(txy_indexes[l] for l in indices)       
-        
+            indexList =list(txy_indexes[l] for l in indices)
+
         for pts in ptsList:
             trackNumber.append(i)
             frameList.append(pts[0])
             xList.append(pts[1])
             yList.append(pts[2])
-            
+
 
         for intensity in intensitiesList:
             txy_intensitiesByTrack.append(intensity)
-        
+
         if noLocsFile == False:
             for ind in indexList:
                 txy_indexesByTrack.append(ind)
-        
+
 
     #make dataframe of tracks, xy coordianates and intensities for linked tracks
     if noLocsFile == False:
-        dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'file_id': txy_indexesByTrack}              
+        dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack, 'file_id': txy_indexesByTrack}
     else:
         dict = {'track_number': trackNumber, 'frame':frameList, 'x': xList, 'y':yList, 'intensity': txy_intensitiesByTrack}
-        
+
     linkedtrack_DF = pd.DataFrame(dict)
-         
-    if noLocsFile == False:    
+
+    if noLocsFile == False:
         #match id to locs file values (starting at 1)
-        
+
         #linkedtrack_DF['file_id'] = linkedtrack_DF['file_id'] + 1
         locs_DF = pd.read_csv(locsFileName)
         id_list = locs_DF['id'].tolist()
         file_id_list = linkedtrack_DF['file_id'].tolist()
-        
+
         idsForlinkedPoints = [id_list[i] for i in file_id_list]
-    
-        linkedtrack_DF['id'] = idsForlinkedPoints 
+
+        linkedtrack_DF['id'] = idsForlinkedPoints
     else:
         linkedtrack_DF['id'] = linkedtrack_DF.index
-        
+
     #convert back to nm
     linkedtrack_DF['x [nm]'] = linkedtrack_DF['x'] * 108
-    linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108 
-    
+    linkedtrack_DF['y [nm]'] = linkedtrack_DF['y'] * 108
+
     #cast frames as int
     linkedtrack_DF['frame'] = linkedtrack_DF['frame'].astype('int')
-    
+
     #round intensity
-    linkedtrack_DF['intensity'] = linkedtrack_DF['intensity'].round(2) 
+    linkedtrack_DF['intensity'] = linkedtrack_DF['intensity'].round(2)
 
     #drop file-id
-    if noLocsFile == False:    
+    if noLocsFile == False:
         linkedtrack_DF = linkedtrack_DF.drop(['file_id'], axis=1)
-    
+
     #save df as csv
     #linkedtrack_DF = linkedtrack_DF.sort_values('id')
     linkedtrack_DF.to_csv(filename, index=True)
 
-            
+
     print('tracks file {} saved'.format(filename))
-  
+
 
 class Points(object):
     def __init__(self, txy_pts):
@@ -393,37 +393,38 @@ class Points(object):
 
     def getIntensities(self, dataArray):
         #intensities retrieved from image stack using point data (converted from floats to ints)
-        
+
         n, w, h = dataArray.shape
-        
+
         #clear intensity list
         self.intensities = []
-        
+
         for point in tqdm(self.txy_pts):
             frame = int(round(point[0]))
             x = int(round(point[1]))
             y = int(round(point[2]))
-            
+
             #set x,y bounds for 3x3 pixel square
             xMin = x - 1
             xMax = x + 2
-            
+
             yMin = y - 1
             yMax = y + 2
-            
+
             #deal with edge cases
             if xMin < 0:
                 xMin = 0
             if xMax > w:
                 xMax = w
-                
+
             if yMin <0:
                 yMin = 0
             if yMax > h:
                 yMax = h
-            
-            #get mean pixels values for 3x3 square - background subtract using frame min intensity as estimate of background
-            self.intensities.append((np.mean(dataArray[frame][xMin:xMax,yMin:yMax]) - np.min(dataArray[frame])))
+
+            #get mean pixels values for 3x3 square
+            #self.intensities.append((np.mean(dataArray[frame][xMin:xMax,yMin:yMax]) - np.min(dataArray[frame]))) #no longer subtracting min
+            self.intensities.append(np.mean(dataArray[frame][xMin:xMax,yMin:yMax]))
 
 def skip_refinePoints(txy_pts):
     if txy_pts is None:
@@ -446,12 +447,12 @@ def loadtracksjson(filename):
     points = Points(txy_pts)
     points.tracks = pts['tracks']
     points.get_tracks_by_frame()
-    return points     
+    return points
 
 # Radius of Gyration and Asymmetry
 def RadiusGyrationAsymmetrySkewnessKurtosis(trackDF):
     # Drop any skipped frames and convert trackDF to XY array
-    points_array = np.array(trackDF[['x', 'y']].dropna())  
+    points_array = np.array(trackDF[['x', 'y']].dropna())
     # get Rg etc using Vivek's codes
     center = points_array.mean(0)
     normed_points = points_array - center[None, :]
@@ -474,7 +475,7 @@ def RadiusGyrationAsymmetrySkewnessKurtosis(trackDF):
 
 # Fractal Dimension
 def FractalDimension(points_array):
-    ####Vivek's code    
+    ####Vivek's code
     #Check if points are on the same line:
     x0, y0 = points_array[0]
     points = [ (x, y) for x, y in points_array if ( (x != x0) or (y != y0) ) ]
@@ -491,8 +492,8 @@ def FractalDimension(points_array):
     return fractal_dimension_value
 
 # Net Displacement
-def NetDisplacementEfficiency(points_array):      
-    ####Vivek's code   
+def NetDisplacementEfficiency(points_array):
+    ####Vivek's code
     net_displacement_value = np.linalg.norm(points_array[0]-points_array[-1])
     netDispSquared = pow(net_displacement_value, 2)
     points_a = points_array[1:, :]
@@ -535,13 +536,13 @@ def SummedSinesCosines(points_array):
 def getRadiusGyrationForAllTracksinDF(tracksDF):
     tracksToTest = tracksDF['track_number'].tolist()
     idTested = []
-    radius_gyration_list=[] 
-    asymmetry_list=[] 
-    skewness_list=[] 
-    kurtosis_list=[]  
+    radius_gyration_list=[]
+    asymmetry_list=[]
+    skewness_list=[]
+    kurtosis_list=[]
     trackIntensity_mean = []
     trackIntensity_std = []
-    
+
     for i in range(len(tracksToTest)):
         idToTest = tracksToTest[i]
         if idToTest not in idTested:
@@ -549,106 +550,112 @@ def getRadiusGyrationForAllTracksinDF(tracksDF):
             idTested.append(idToTest)
             #print(radius_gyration_value, asymmetry_value, skewness_value, kurtosis_value)
             print('\r' + 'RG analysis complete for track {} of {}'.format(idToTest,max(tracksToTest)), end='\r')
-            
-        radius_gyration_list.append(radius_gyration_value) 
-        asymmetry_list.append(asymmetry_value) 
+
+        radius_gyration_list.append(radius_gyration_value)
+        asymmetry_list.append(asymmetry_value)
         skewness_list.append(skewness_value)
-        kurtosis_list.append(kurtosis_value) 
-        
+        kurtosis_list.append(kurtosis_value)
+
         trackIntensity_mean.append(np.mean(tracksDF[tracksDF['track_number']==idToTest]['intensity']))
-        trackIntensity_std.append(np.std(tracksDF[tracksDF['track_number']==idToTest]['intensity']))    
-        
-            
+        trackIntensity_std.append(np.std(tracksDF[tracksDF['track_number']==idToTest]['intensity']))
+
+
     tracksDF['radius_gyration'] = radius_gyration_list
     tracksDF['asymmetry'] = asymmetry_list
     tracksDF['skewness'] = skewness_list
-    tracksDF['kurtosis'] = kurtosis_list 
+    tracksDF['kurtosis'] = kurtosis_list
     tracksDF['track_intensity_mean'] = trackIntensity_mean
     tracksDF['track_intensity_std'] = trackIntensity_std
-    
+
     return tracksDF
 
 def getFeaturesForAllTracksinDF(tracksDF):
     tracksToTest = tracksDF['track_number'].tolist()
     idTested = []
-    fracDim_list = [] 
+    fracDim_list = []
     netDispl_list = []
     straight_list = []
 
-    
+
     for i in range(len(tracksToTest)):
         idToTest = tracksToTest[i]
         if idToTest not in idTested:
             #get single track
-            trackDF = tracksDF[tracksDF['track_number']==idToTest]            
+            trackDF = tracksDF[tracksDF['track_number']==idToTest]
             # Drop any skipped frames and convert trackDF to XY array
-            points_array = np.array(trackDF[['x', 'y']].dropna())              
-            
+            points_array = np.array(trackDF[['x', 'y']].dropna())
+
             #fractal_dimension calc
             fractal_dimension_value = FractalDimension(points_array)
             #net_Dispacement calc
             net_displacement_value, _ = NetDisplacementEfficiency(points_array)
             #straightness calc
             _, _, cos_mean_val, _ = SummedSinesCosines(points_array)
-            
+
             #update ID tested
             idTested.append(idToTest)
             #print(radius_gyration_value, asymmetry_value, skewness_value, kurtosis_value)
             print('\r' + 'features analysis complete for track {} of {}'.format(idToTest,max(tracksToTest)), end='\r')
-        
+
         #add feature values to lists
-        fracDim_list.append(fractal_dimension_value) 
+        fracDim_list.append(fractal_dimension_value)
         netDispl_list.append(net_displacement_value)
         straight_list.append(cos_mean_val)
-                
-    #update tracksDF        
+
+    #update tracksDF
     tracksDF['fracDimension'] = fracDim_list
     tracksDF['netDispl'] = netDispl_list
     tracksDF['Straight'] = straight_list
-    
+
     return tracksDF
 
 def addLagDisplacementToDF(tracksDF):
     #align x and y locations of link
-    tracksDF = tracksDF.assign(x2=tracksDF.x.shift(-1))  
+    tracksDF = tracksDF.assign(x2=tracksDF.x.shift(-1))
     tracksDF = tracksDF.assign(y2=tracksDF.y.shift(-1))
 
     #calculate lag Distance
     tracksDF['x2-x1_sqr'] = np.square(tracksDF['x2']-tracksDF['x'])
-    tracksDF['y2-y1_sqr'] = np.square(tracksDF['y2']-tracksDF['y'])      
+    tracksDF['y2-y1_sqr'] = np.square(tracksDF['y2']-tracksDF['y'])
     tracksDF['distance'] = np.sqrt((tracksDF['x2-x1_sqr']+tracksDF['y2-y1_sqr']))
-    
+
     #mask final track position lags
     tracksDF['mask'] = True
     tracksDF.loc[tracksDF.groupby('track_number').tail(1).index, 'mask'] = False  #mask final location
-    
-    #get lags for all track locations (not next track)    
+
+    #get lags for all track locations (not next track)
     tracksDF['lag'] = tracksDF['distance'].where(tracksDF['mask'])
 
     #add track mean lag distance to all rows
-    tracksDF['meanLag'] = tracksDF.groupby('track_number')['lag'].transform('mean')   
-    
+    tracksDF['meanLag'] = tracksDF.groupby('track_number')['lag'].transform('mean')
+
     #add track length for each track row
-    tracksDF['track_length'] = tracksDF.groupby('track_number')['lag'].transform('sum')   
+    tracksDF['track_length'] = tracksDF.groupby('track_number')['lag'].transform('sum')
 
     #add 'radius_gyration' (scaled by mean lag displacement)
     tracksDF['radius_gyration_scaled'] = tracksDF['radius_gyration']/tracksDF['meanLag']
 
     #add 'radius_gyration' (scaled by n_segments)
     tracksDF['radius_gyration_scaled_nSegments'] = tracksDF['radius_gyration']/tracksDF['n_segments']
-      
+
     #add 'radius_gyration' (scaled by track_length)
     tracksDF['radius_gyration_scaled_trackLength'] = tracksDF['radius_gyration']/tracksDF['track_length']
-        
+
     print('\r' + 'lags added', end='\r')
-     
+
     return tracksDF
 
 
 def getNearestNeighbors(train,test,k=2):
-    tree = KDTree(train, leaf_size=5)   
-    dist, ind = tree.query(test, k=k)
-    #dist.reshape(np.size(dist),)     
+    tree = KDTree(train, leaf_size=5)
+    if k > len(train):
+        #no neighbours to count return nan
+        a = np.empty((k,k))
+        a[:] = np.nan
+        return np.nan, np.nan
+    else:
+        dist, ind = tree.query(test, k=k)
+    #dist.reshape(np.size(dist),)
     return dist, ind
 
 def getNN(tracksDF):
@@ -664,10 +671,14 @@ def getNN(tracksDF):
         #filter by frame
         frameXY = tracksDF[tracksDF['frame'] == frame][['x','y']].to_numpy()
         #nearest neighbour
-        distances, indexes = getNearestNeighbors(frameXY,frameXY, k=2)   
+        distances, indexes = getNearestNeighbors(frameXY,frameXY, k=2)
         #append distances and indexes of 1st neighbour to list
-        nnDistList.extend(distances[:,1])
-        nnIndexList.extend(indexes[:,1])
+        if (np.isnan(distances).any()):
+            nnDistList.append(np.nan)
+            nnIndexList.append(np.nan)
+        else:
+            nnDistList.extend(distances[:,1])
+            nnIndexList.extend(indexes[:,1])
         print('\r' + 'NN analysis complete for frame{} of {}'.format(i,len(frames)), end='\r')
 
     #add results to dataframe
@@ -682,63 +693,64 @@ def getNN(tracksDF):
 
 def getIntensities(dataArray, pts):
     #intensities retrieved from image stack using point data (converted from floats to ints)
-    
+
     n, w, h = dataArray.shape
-    
+
     #clear intensity list
     intensities = []
-    
+
     for point in pts:
         frame = round(point[0])
         x = round(point[1])
         y = round(point[2])
-        
+
         #set x,y bounds for 3x3 pixel square
         xMin = x - 1
         xMax = x + 2
-        
+
         yMin = y - 1
         yMax = y + 2
-        
+
         #deal with edge cases
         if xMin < 0:
             xMin = 0
         if xMax > w:
             xMax = w
-            
+
         if yMin <0:
             yMin = 0
         if yMax > h:
             yMax = h
-        
-        #get mean pixels values for 3x3 square - background subtract using frame min intensity as estimate of background
-        intensities.append((np.mean(dataArray[frame][yMin:yMax,xMin:xMax]) - np.min(dataArray[frame])))
-    
+
+        #get mean pixels values for 3x3 square
+        #intensities.append((np.mean(dataArray[frame][yMin:yMax,xMin:xMax]) - np.min(dataArray[frame]))) #no longer subtracting min
+        intensities.append(np.mean(dataArray[frame][yMin:yMax,xMin:xMax]))
+
     return intensities
 
 def calcFeaturesforFiles(tracksList, minNumberSegments=1):
     for trackFile in tqdm(tracksList):
-                
+
             ##### load data
             tracksDF = pd.read_csv(trackFile)
 
             #add number of segments for each Track row
             tracksDF['n_segments'] = tracksDF.groupby('track_number')['track_number'].transform('count')
-                     
-            
+
+
             if minNumberSegments !=0:
             #filter by number of track segments
                 tracksDF = tracksDF[tracksDF['n_segments'] > minNumberSegments]
-    
+
             #add Rg values to df
             tracksDF = getRadiusGyrationForAllTracksinDF(tracksDF)
-            
+
             #add features to df
             tracksDF = getFeaturesForAllTracksinDF(tracksDF)
-            
+
             #add lags to df
             tracksDF = addLagDisplacementToDF(tracksDF)
-            
+
             #add nearest neigbours to df
             tracksDF = getNN(tracksDF)
 
@@ -746,13 +758,13 @@ def calcFeaturesforFiles(tracksList, minNumberSegments=1):
             tracksDF = tracksDF[['track_number', 'frame', 'id', 'x','y', 'intensity', 'n_segments', 'track_length','radius_gyration', 'asymmetry', 'skewness',
                                  'kurtosis', 'radius_gyration_scaled','radius_gyration_scaled_nSegments','radius_gyration_scaled_trackLength', 'track_intensity_mean', 'track_intensity_std', 'lag', 'meanLag',
                                  'fracDimension', 'netDispl', 'Straight', 'nnDist', 'nnIndex_inFrame']]
-        
-        
+
+
             #round values
             tracksDF = tracksDF.round({'track_length': 3,
                                        'radius_gyration': 3,
-                                       'asymmetry': 3,                                       
-                                       'skewness': 3,                                      
+                                       'asymmetry': 3,
+                                       'skewness': 3,
                                        'kurtosis': 3,
                                        'radius_gyration_scaled': 3,
                                        'radius_gyration_scaled_nSegments': 3,
@@ -764,14 +776,14 @@ def calcFeaturesforFiles(tracksList, minNumberSegments=1):
                                        'fracDimension': 3,
                                        'netDispl': 3,
                                        'Straight': 3,
-                                       'nnDist': 3                                                                              
+                                       'nnDist': 3
                                        })
-        
-        
+
+
             #saveRg DF
             saveName = os.path.splitext(trackFile)[0] + 'RG.csv'
             tracksDF.to_csv(saveName)
-            print('\n new tracks file exported to {}'.format(saveName))   
+            print('\n new tracks file exported to {}'.format(saveName))
 
 
 def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
@@ -785,7 +797,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
         pred_data_path (str): complete path to features that need predictions in .csv format, ex. 'C:/data/newconditions/gsmtx4_feature_data.csv'
                                should be a .csv file with features columns, an 'Experiment' column identifying the unique experiment ('GsMTx4'),
                                and a 'TrackID' column with unique numerical IDs for each track.
-    
+
     Output:
         .csv file of dataframe of prediction_file features with added SVMPredictedClass column output to pred_data_path parent folder
     """
@@ -796,7 +808,7 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
             if minVal <= 0:
                 data[col] += (np.abs(minVal) + 1e-15)
         return data
-    
+
     train_feats = pd.read_csv(Path(train_data_path), sep=',')
     train_feats = train_feats.loc[train_feats['Experiment'] == 'tdTomato_37Degree']
     train_feats = train_feats[['Experiment', 'TrackID', 'NetDispl', 'Straight', 'Asymmetry', 'radiusGyration', 'Kurtosis', 'fracDimension', 'Elected_Label']]
@@ -806,61 +818,61 @@ def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.20, random_state = 0)
     X_train_, X_test_ = prepare_box_cox_data(X_train), prepare_box_cox_data(X_test)
     X_train_, X_test_ = pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(X_train_), columns=X.columns), pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(X_test_), columns=X.columns)
-    
+
     for col_name in X_train.columns:
         X_train.eval(f'{col_name} = @X_train_.{col_name}')
         X_test.eval(f'{col_name} = @X_test_.{col_name}')
-    
+
     pipeline_steps = [("pca", decomposition.PCA()), ("scaler", StandardScaler()), ("SVC", SVC(kernel="rbf"))]
     check_params = {
         "pca__n_components" : [3],
         "SVC__C" : [0.1, 0.5, 1, 10, 30, 40, 50, 75, 100, 500, 1000],
         "SVC__gamma" : [0.001, 0.005, 0.01, 0.03, 0.05, 0.1, 0.5, 1., 5., 10., 50.0],
     }
-    
+
     pipeline = Pipeline(pipeline_steps)
     create_search_grid = GridSearchCV(pipeline, param_grid=check_params, cv=10)
     create_search_grid.fit(X_train, y_train)
     pipeline.set_params(**create_search_grid.best_params_)
     pipeline.fit(X_train, y_train)
     X = pd.read_csv(Path(pred_data_path), sep=',')
-    
+
     X = X.rename(columns={"radius_gyration" : "radiusGyration",
                       "track_number" : "TrackID",
                       "netDispl" : "NetDispl",
-                      "asymmetry" : "Asymmetry",   
-                      "kurtosis" : "Kurtosis"                     
+                      "asymmetry" : "Asymmetry",
+                      "kurtosis" : "Kurtosis"
                       }) ###GD EDIT
-    
+
     X['Experiment'] = exptName    ###GD EDIT
-    
+
     X = X[['Experiment', 'TrackID', 'NetDispl', 'Straight', 'Asymmetry', 'radiusGyration', 'Kurtosis', 'fracDimension']]
     X_label = X['Experiment'].iloc[0]
     X_feats = X.iloc[:, 2:]
     X_feats_ = pd.DataFrame(PowerTransformer(method='box-cox').fit_transform(prepare_box_cox_data(X_feats)), columns=X_feats.columns)
-    
+
     for col_name in X_feats.columns:
         X_feats.eval(f'{col_name} = @X_feats_.{col_name}')
-    
+
     X_pred = pipeline.predict(X_feats)
     X['SVMPredictedClass'] = X_pred.astype('int')
     X_outpath = Path(pred_data_path).parents[0] / f'{Path(pred_data_path).stem}_SVMPredicted{level}.csv'
     #X.to_csv(X_outpath, sep=',', index=False)
-    
+
     #add classes to RG file ####GD EDIT
     tracksDF = pd.read_csv(Path(pred_data_path), sep=',')
     tracksDF['Experiment'] = X['Experiment']
     tracksDF['SVM'] = X['SVMPredictedClass']
-    
+
     tracksDF.to_csv(X_outpath, sep=',', index=None)
 
 
 def classifyTracks(tracksList, train_data_path, level=''):
-    
+
     for pred_data_path in tqdm(tracksList):
         exptName = os.path.basename(pred_data_path).split('_MMStack')[0]
         predict_SPT_class(train_data_path, pred_data_path, exptName, level=level)
-    
+
 
 def filterDFandLocs_SVM3(dfFile, locsIdentifer='_tracksRG_SVMPredicted.csv', colName='SVM'):
     #load df with SVM
@@ -869,72 +881,72 @@ def filterDFandLocs_SVM3(dfFile, locsIdentifer='_tracksRG_SVMPredicted.csv', col
     locsFileName = dfFile.split(locsIdentifer)[0] + '.csv'
     locs = pd.read_csv(locsFileName)
     locs['id'] = locs['id'].astype('int')
-    
+
     #filter by SVM class
     filteredDF = df[df[colName]==3]
     filteredID_list = filteredDF['id'].tolist()
 
-    
-    #filter locs file to get locs not allocated to filtered df    
-    remainingLocs = locs[~locs['id'].isin(filteredID_list)]   
+
+    #filter locs file to get locs not allocated to filtered df
+    remainingLocs = locs[~locs['id'].isin(filteredID_list)]
     #remainingLocs = remainingLocs.set_index('id')
-    
+
     #save df and locs files
     filteredDF.to_csv(dfFile.split('.csv')[0] + '_SVM-3.csv', index=None)
     remainingLocs.to_csv(locsFileName.split('.csv')[0] + '2.csv', index=None)
-    return 
+    return
 
-  
-    
+
+
 def filterDFandLocs_SVM2(dfFile, locsIdentifer='_tracks2RG2_SVMPredicted2.csv', colName='SVM'):
     #load df with SVM
     df = pd.read_csv(dfFile)
-    
+
     #load original locs file
     locsFileName = dfFile.split(locsIdentifer)[0] + '.csv'
     locs = pd.read_csv(locsFileName)
-    
+
     #load SVM3 df
     df_SVM3_file = dfFile.split('_locsID2_tracks2RG2_SVMPredicted2.csv')[0] + '_locsID_tracksRG_SVMPredicted_SVM-3.csv'
-    df_SVM3 = pd.read_csv(df_SVM3_file) 
-    
+    df_SVM3 = pd.read_csv(df_SVM3_file)
+
     #filter by SVM class
     df_SVM2 = df[df[colName]==2]
     df_SVM3_extras = df[df[colName]==3]
-    
+
     #combine SVM3 tracks
     maxTrackNumber = max(df_SVM3['track_number'])
-    df_SVM3_extras['track_number'] = df_SVM3_extras['track_number'] + maxTrackNumber 
+    df_SVM3_extras['track_number'] = df_SVM3_extras['track_number'] + maxTrackNumber
     df_SVM3 = df_SVM3.append(df_SVM3_extras)
-    
+
     df_SVM2and3 = df_SVM2.append(df_SVM3)
-        
+
     #get ids of SVM tracks
-    filteredID_list = df_SVM2and3['id'].tolist()    
-            
-    #filter locs file to get locs not allocated to filtered df    
-    remainingLocs = locs[~locs['id'].isin(filteredID_list)]  
+    filteredID_list = df_SVM2and3['id'].tolist()
+
+    #filter locs file to get locs not allocated to filtered df
+    remainingLocs = locs[~locs['id'].isin(filteredID_list)]
     remainingLocs['id'] = remainingLocs['id'].astype('int')
-    
+
     #save df and locs files
     df_SVM2.to_csv(dfFile.split('.csv')[0] + '_SVM-2.csv', index=None)
-    df_SVM3.to_csv(df_SVM3_file.split('_locsID_tracksRG_SVMPredicted_SVM-3.csv')[0] + '_locsID2_tracks2RG2_SVMPredicted2_SVM-3.csv', index=None)   
+    df_SVM3.to_csv(df_SVM3_file.split('_locsID_tracksRG_SVMPredicted_SVM-3.csv')[0] + '_locsID2_tracks2RG2_SVMPredicted2_SVM-3.csv', index=None)
     remainingLocs.to_csv(locsFileName.split('_locsID2.csv')[0] + '_locsID3.csv', index=None)
-    
+
     return
 
 def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 3, level=''):
     for fileName in tqdm(tiffList):
-        
+
         #set file & save names
         pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
-        lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)  
-        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level) 
-             
+        lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)
+        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level)
+
         #import tiff to flika
         data_window = open_file(fileName)
         #import points
-        txy_pts = load_points(pointsFileName)            
+        txy_pts = load_points(pointsFileName)
         p = Points(txy_pts)
         #link points
         p.link_pts(skipFrames,distanceToLink)
@@ -944,52 +956,52 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         tracks = p.tracks
         savetracksCSV(p, tracksSaveName, pointsFileName)
         #export SLD histogram
-        SLD_hist = SLD_Histogram(p, pixelSize, frameLength)
-        SLD_hist.export_histogram(autoSave = True, autoFileName = lagsHistoSaveName)
-        
-        #close flika windows        
-        SLD_hist.close()
-        g.m.clear()  
+        #SLD_hist = SLD_Histogram(p, pixelSize, frameLength)
+        #SLD_hist.export_histogram(autoSave = True, autoFileName = lagsHistoSaveName)
+
+        #close flika windows
+        #SLD_hist.close()
+        g.m.clear()
     return
 
 
 def importJSON(tiffList, pixelSize = 0.108, level=''):
     for fileName in tqdm(tiffList):
-        
+
         #set file & save names
-        jsonFileName = os.path.splitext(fileName)[0] + '{}.json'.format(level)        
+        jsonFileName = os.path.splitext(fileName)[0] + '{}.json'.format(level)
         #pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
-        lagsHistoSaveName = os.path.splitext(fileName)[0] + '_lagsHisto{}.txt'.format(level)  
-        tracksSaveName = os.path.splitext(fileName)[0] + '_locsID_tracks{}.csv'.format(level) 
-             
+        lagsHistoSaveName = os.path.splitext(fileName)[0] + '_lagsHisto{}.txt'.format(level)
+        tracksSaveName = os.path.splitext(fileName)[0] + '_locsID_tracks{}.csv'.format(level)
+
         #import tiff to flika
         data_window = open_file(fileName)
         #import points
-         
+
         p =loadtracksjson(jsonFileName)
         print('tracks loaded')
         #link points
         #p.link_pts(skipFrames,distanceToLink)
-        
+
         #get background subtracted intensity for each point
         p.getIntensities(data_window.imageArray())
-        
+
         #save tracks
         tracks = p.tracks
         savetracksCSV(p, tracksSaveName, None, noLocsFile=True)
         #export SLD histogram
         #SLD_hist = SLD_Histogram(p, pixelSize, frameLength)
         #SLD_hist.export_histogram(autoSave = True, autoFileName = lagsHistoSaveName)
-        
-        #close flika windows        
+
+        #close flika windows
         #SLD_hist.close()
-        g.m.clear() 
-    
+        g.m.clear()
+
 
 def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLink = 3, level='', linkingType='standard', maxDistance=5):
     #try loading trackpy
     try:
-        import trackpy as tp    
+        import trackpy as tp
     except:
         print("trackpy installation not detected. Install instructions at 'http://soft-matter.github.io/trackpy/v0.5.0/installation.html' ")
         return
@@ -998,41 +1010,41 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
     pixelSize = pixelSize *1000
 
     for fileName in tqdm(tiffList):
-        
+
         #set file & save names
         pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
-        #lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)  
-        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level) 
-        
+        #lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)
+        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level)
+
         #turn off trackpy messages
         tp.quiet()
         #load locs file
-        locs = pd.read_csv(pointsFileName)        
+        locs = pd.read_csv(pointsFileName)
         #convert coordinates to pixels
         locs['x'] = locs['x [nm]'] / pixelSize
-        locs['y'] = locs['y [nm]'] / pixelSize       
+        locs['y'] = locs['y [nm]'] / pixelSize
         #drop unneeded cols
         locs = locs[['frame', 'x', 'y', 'id', 'x [nm]', 'y [nm]']]
-        
+
         #link points
         if linkingType=='standard':
             # standard linking
             tracks = tp.link(locs, distanceToLink, memory=skipFrames)
-            
+
         if linkingType=='adaptive':
             # adaptive linking
-            tracks = tp.link(locs, maxDistance, adaptive_stop=0.1, adaptive_step=0.95, memory=gapSize) 
+            tracks = tp.link(locs, maxDistance, adaptive_stop=0.1, adaptive_step=0.95, memory=gapSize)
 
         if linkingType=='velocityPredict':
             # adaptive linking using velocity prediction
             pred = tp.predict.NearestVelocityPredict()
-            tracks = pred.link_df(locs, distance, memory=gapSize)   
+            tracks = pred.link_df(locs, distance, memory=gapSize)
 
         if linkingType=='adaptive + velocityPredict':
             # adaptive linking using velocity prediction
             pred = tp.predict.NearestVelocityPredict()
-            tracks = pred.link_df(locs, maxDistance, memory=gapSize, adaptive_stop=0.1, adaptive_step=0.95)           
-               
+            tracks = pred.link_df(locs, maxDistance, memory=gapSize, adaptive_stop=0.1, adaptive_step=0.95)
+
         #get background subtracted intensity for each point
         A = skio.imread(fileName, plugin='tifffile')
         pts = tracks[['frame','x','y']]
@@ -1040,27 +1052,26 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
         pts = pts.to_numpy()
         intensities = getIntensities(A, pts)
         tracks['intensity'] = intensities
-        
+
         #rename cols to match pynsight
-        tracks['track_number'] = tracks['particle']         
+        tracks['track_number'] = tracks['particle']
         #sort by track_number and frame
-        tracks = tracks.sort_values(by=['track_number', 'frame'])        
+        tracks = tracks.sort_values(by=['track_number', 'frame'])
         #reorder columns and drop particles
-        tracks = tracks[['track_number','frame', 'x', 'y','intensity', 'id', 'x [nm]', 'y [nm]']]        
+        tracks = tracks[['track_number','frame', 'x', 'y','intensity', 'id', 'x [nm]', 'y [nm]']]
         #Save tracks
-        tracks.to_csv(tracksSaveName)            
+        tracks.to_csv(tracksSaveName)
         print('tracks file {} saved'.format(tracksSaveName))
     return
 
 if __name__ == '__main__':
-    ##### RUN ANALYSIS        
-    path = '/Users/george/Data/trackpyTest'
-    path = '/Users/george/Data/alan_jsonFiles'
+    ##### RUN ANALYSIS
+    path = r'/Users/george/Desktop/testing'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
-    #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)  
-    tiffList = glob.glob(path + '/**/*.tif', recursive = True)      
+    #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)
+    tiffList = glob.glob(path + '/**/*.tif', recursive = True)
 
     #training data path
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'
@@ -1069,79 +1080,79 @@ if __name__ == '__main__':
     minLinkSegments = 2
 
     #max number of gap frames to skip
-    gapSize = 1
+    gapSize = 2
 
     #max distance in pixels to allow a linkage
-    distance = 3
-    
+    distance = 5
+
     #pixel size
     pixelSize_new = 0.108
-    
+
     #trackpy options
     #linkingType = 'standard'
     #linkingType = 'adaptive'
-    #linkingType = 'velocityPredict'    
-    linkingType = 'adaptive + velocityPredict'    
+    #linkingType = 'velocityPredict'
+    linkingType = 'adaptive + velocityPredict'
     maxSearchDistance = 6 #for adaptive search
 
     ##########################################################################
     #STEP 2.1 Add IDs to locs file
     ##########################################################################
-    #get expt folder list
-    # locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)   
+    ## get expt folder list
+    locsList = glob.glob(path + '/**/*_locs.csv', recursive = True)
 
-    # for file in tqdm(locsList):
-    #     addID(file)
+    for file in tqdm(locsList):
+        addID(file)
 
 
     # #loop through linkage cut off didstances
     # for distance in tqdm(range(3,4)):
 
 
-    ##########################################################################        
+    ##########################################################################
     #STEP 3 link points
     ##########################################################################
-    
-# =============================================================================
-#     # LINK USING FLIKA (Kyle's code)
-#     fa = start_flika()
-#                    
-#     #run linking on all tiffs in directory
-#     linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
-#     
-#     fa.close() 
-# =============================================================================
-    
-    # LINK USING TRACKPY
-    #linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)    
 
+    ## LINK USING FLIKA (Kyle's code)
+    fa = start_flika()
+
+    ##run linking on all tiffs in directory
+    linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
+
+    fa.close()
+
+# =============================================================================
+#     # LINK USING TRACKPY
+#     linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)
+#
+# =============================================================================
 
     ##########################################################################
-    #IMPORT POINTS AND TRACKS FROM JSON (INSTEAD OF PREVIOUS STEPS)
+    ## IMPORT POINTS AND TRACKS FROM JSON (INSTEAD OF PREVIOUS STEPS)
     #fa = start_flika()
     #importJSON(tiffList, pixelSize = pixelSize_new)
-    #fa.close() 
+    #fa.close()
     ##########################################################################
-    
-        
+
+
     ##########################################################################
     #STEP  4 Calculate RG and Features
     ##########################################################################
-    #get folder paths 
-    tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)   
-     
-    #run analysis - filter for track lengths > minLinkSements 
-    calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)   
-    
+    #get folder paths
+    tracksList = glob.glob(path + '/**/*_locsID_tracks.csv', recursive = True)
+
+    #run analysis - filter for track lengths > minLinkSements
+    calcFeaturesforFiles(tracksList, minNumberSegments=minLinkSegments)
+
     ##########################################################################
     #STEP  5 Classify Tracks
-    ##########################################################################    
+    ##########################################################################
     #get folder paths
-    tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)   
-        
+    tracksList = glob.glob(path + '/**/*_tracksRG.csv', recursive = True)
+
     #run analysis
     #classifyTracks(tracksList, trainpath, level='_cutoff_{}'.format(distance)) #uncomment if running multiple cut off values
-    classifyTracks(tracksList, trainpath, level=''.format(distance))    
+    classifyTracks(tracksList, trainpath, level=''.format(distance))
 
-    
-   
+
+
