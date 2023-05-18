@@ -6,8 +6,8 @@ Created on Tue Dec 13 15:25:24 2022
 @author: george
 """
 
-%matplotlib qt
-%gui qt
+#%matplotlib qt
+#%gui qt
 
 import warnings
 warnings.simplefilter(action='ignore', category=Warning)
@@ -71,7 +71,10 @@ from sklearn.preprocessing import power_transform, PowerTransformer, StandardSca
 
 import skimage.io as skio
 
-#sys.setrecursionlimit(10000)
+recursionLimit = 1000000
+sys.setrecursionlimit(recursionLimit)
+
+#print(sys.getrecursionlimit())
 
 
 def addID(file):
@@ -308,7 +311,7 @@ class Points(object):
         self.pts_remaining = []
         self.pts_idx_by_frame = []  # this array has the same structure as points_by_array but contains the index of the original txy_pts argument
         self.intensities = [] #GD edit
-
+        self.recursiveFailure = False
 
     def link_pts(self, maxFramesSkipped, maxDistance):
         print('Linking points')
@@ -332,7 +335,12 @@ class Points(object):
                 tracks.append(track)
         self.tracks = tracks
 
-    def extend_track(self, track, maxFramesSkipped, maxDistance):
+    def extend_track(self, track, maxFramesSkipped, maxDistance, i=0):
+        #this limits the amount of possible recursion - 10000 set by trial and error
+        if i >= 10000:
+            self.recursiveFailure = True
+            return track
+
         pt = self.txy_pts[track[-1]]
         # pt can move less than two pixels in one frame, two frames can be skipped
         for dt in np.arange(1, maxFramesSkipped+2):
@@ -350,7 +358,7 @@ class Points(object):
                 abs_next_pt_idx = self.pts_idx_by_frame[frame][next_pt_idx]
                 track.append(abs_next_pt_idx)
                 self.pts_remaining[frame][next_pt_idx] = False
-                track = self.extend_track(track, maxFramesSkipped, maxDistance)
+                track = self.extend_track(track, maxFramesSkipped, maxDistance, i=i+1)
                 return track
         return track
 
@@ -730,60 +738,64 @@ def getIntensities(dataArray, pts):
 
 def calcFeaturesforFiles(tracksList, minNumberSegments=1):
     for trackFile in tqdm(tracksList):
+            try:
+                ##### load data
+                tracksDF = pd.read_csv(trackFile)
 
-            ##### load data
-            tracksDF = pd.read_csv(trackFile)
-
-            #add number of segments for each Track row
-            tracksDF['n_segments'] = tracksDF.groupby('track_number')['track_number'].transform('count')
-
-
-            if minNumberSegments !=0:
-            #filter by number of track segments
-                tracksDF = tracksDF[tracksDF['n_segments'] > minNumberSegments]
-
-            #add Rg values to df
-            tracksDF = getRadiusGyrationForAllTracksinDF(tracksDF)
-
-            #add features to df
-            tracksDF = getFeaturesForAllTracksinDF(tracksDF)
-
-            #add lags to df
-            tracksDF = addLagDisplacementToDF(tracksDF)
-
-            #add nearest neigbours to df
-            tracksDF = getNN(tracksDF)
-
-            #### DROP any Unnamed columns #####
-            tracksDF = tracksDF[['track_number', 'frame', 'id', 'x','y', 'intensity', 'n_segments', 'track_length','radius_gyration', 'asymmetry', 'skewness',
-                                 'kurtosis', 'radius_gyration_scaled','radius_gyration_scaled_nSegments','radius_gyration_scaled_trackLength', 'track_intensity_mean', 'track_intensity_std', 'lag', 'meanLag',
-                                 'fracDimension', 'netDispl', 'Straight', 'nnDist', 'nnIndex_inFrame']]
+                #add number of segments for each Track row
+                tracksDF['n_segments'] = tracksDF.groupby('track_number')['track_number'].transform('count')
 
 
-            #round values
-            tracksDF = tracksDF.round({'track_length': 3,
-                                       'radius_gyration': 3,
-                                       'asymmetry': 3,
-                                       'skewness': 3,
-                                       'kurtosis': 3,
-                                       'radius_gyration_scaled': 3,
-                                       'radius_gyration_scaled_nSegments': 3,
-                                       'radius_gyration_scaled_trackLength': 3,
-                                       'track_intensity_mean': 2,
-                                       'track_intensity_std': 2,
-                                       'lag': 3,
-                                       'meanLag': 3,
-                                       'fracDimension': 3,
-                                       'netDispl': 3,
-                                       'Straight': 3,
-                                       'nnDist': 3
-                                       })
+                if minNumberSegments !=0:
+                #filter by number of track segments
+                    tracksDF = tracksDF[tracksDF['n_segments'] > minNumberSegments]
+
+                #add Rg values to df
+                tracksDF = getRadiusGyrationForAllTracksinDF(tracksDF)
+
+                #add features to df
+                tracksDF = getFeaturesForAllTracksinDF(tracksDF)
+
+                #add lags to df
+                tracksDF = addLagDisplacementToDF(tracksDF)
+
+                #add nearest neigbours to df
+                tracksDF = getNN(tracksDF)
+
+                #### DROP any Unnamed columns #####
+                tracksDF = tracksDF[['track_number', 'frame', 'id', 'x','y', 'intensity', 'n_segments', 'track_length','radius_gyration', 'asymmetry', 'skewness',
+                                     'kurtosis', 'radius_gyration_scaled','radius_gyration_scaled_nSegments','radius_gyration_scaled_trackLength', 'track_intensity_mean', 'track_intensity_std', 'lag', 'meanLag',
+                                     'fracDimension', 'netDispl', 'Straight', 'nnDist', 'nnIndex_inFrame']]
 
 
-            #saveRg DF
-            saveName = os.path.splitext(trackFile)[0] + 'RG.csv'
-            tracksDF.to_csv(saveName)
-            print('\n new tracks file exported to {}'.format(saveName))
+                #round values
+                tracksDF = tracksDF.round({'track_length': 3,
+                                           'radius_gyration': 3,
+                                           'asymmetry': 3,
+                                           'skewness': 3,
+                                           'kurtosis': 3,
+                                           'radius_gyration_scaled': 3,
+                                           'radius_gyration_scaled_nSegments': 3,
+                                           'radius_gyration_scaled_trackLength': 3,
+                                           'track_intensity_mean': 2,
+                                           'track_intensity_std': 2,
+                                           'lag': 3,
+                                           'meanLag': 3,
+                                           'fracDimension': 3,
+                                           'netDispl': 3,
+                                           'Straight': 3,
+                                           'nnDist': 3
+                                           })
+
+
+                #saveRg DF
+                saveName = os.path.splitext(trackFile)[0] + 'RG.csv'
+                tracksDF.to_csv(saveName)
+                print('\n new tracks file exported to {}'.format(saveName))
+
+            except Exception as e:
+                print(e)
+                print('error in RG analysis, skipping {}'.format(trackFile))
 
 
 def predict_SPT_class(train_data_path, pred_data_path, exptName, level):
@@ -964,6 +976,45 @@ def linkFiles(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, dist
         g.m.clear()
     return
 
+def linkFilesNoFlika(tiffList, pixelSize = 0.108, frameLength = 1, skipFrames = 1, distanceToLink = 3, level='', allFiles=[], includeRecursionProblem=False):
+    for fileName in tqdm(tiffList):
+        print('linking : {}'.format(fileName))
+
+        #set file & save names
+        pointsFileName = os.path.splitext(fileName)[0] + '_locsID{}.csv'.format(level)
+        lagsHistoSaveName = os.path.splitext(pointsFileName)[0] + '_lagsHisto{}.txt'.format(level)
+        tracksSaveName = os.path.splitext(pointsFileName)[0] + '_tracks{}.csv'.format(level)
+
+        # #skip linking if link file already exists
+        # if tracksSaveName in allFiles:
+        #     print('skipping: {}'.format(tracksSaveName))
+        #     continue
+
+        #import tiff to flika
+        A = skio.imread(fileName, plugin='tifffile')
+        #orient to match flika array
+        A = np.rot90(A, axes=(1,2))
+        A = np.fliplr(A)
+        #import points
+        txy_pts = load_points(pointsFileName)
+        p = Points(txy_pts)
+        #link points
+        p.link_pts(skipFrames,distanceToLink)
+        #get background subtracted intensity for each point
+        p.getIntensities(A)
+        #save tracks
+        if includeRecursionProblem:
+          tracks = p.tracks
+          savetracksCSV(p, tracksSaveName, pointsFileName)
+        else:
+            if p.recursiveFailure == False:
+                tracks = p.tracks
+                savetracksCSV(p, tracksSaveName, pointsFileName)
+            else:
+                print('recursion error, skipped {}'.format(fileName))
+
+    return
+
 
 def importJSON(tiffList, pixelSize = 0.108, level=''):
     for fileName in tqdm(tiffList):
@@ -1066,33 +1117,38 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = r'/Users/george/Desktop/testing'
+    path = r'/Users/george/Library/CloudStorage/GoogleDrive-george.dickinson@gmail.com/My Drive/UltraSlow_5ms_DMSO'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)
     tiffList = glob.glob(path + '/**/*.tif', recursive = True)
 
+    allFiles = glob.glob(path + '/**/*', recursive = True)
+
     #training data path
     trainpath = '/Users/george/Data/from_Gabby/gabby_scripts/workFlow/training_data/tdTomato_37Degree_CytoD_training_feats.csv'
 
     #minimum number of link segments (need at least 2 to avoid colinearity in feature calc)
-    minLinkSegments = 2
+    #minLinkSegments = 2
+    minLinkSegments = 4    #gabby
 
     #max number of gap frames to skip
-    gapSize = 2
+    #gapSize = 2
+    gapSize = 18 #gabby
 
     #max distance in pixels to allow a linkage
-    distance = 5
+    #distance = 5
+    distance = 3 #gabby
 
     #pixel size
     pixelSize_new = 0.108
 
     #trackpy options
-    #linkingType = 'standard'
+    linkingType = 'standard'
     #linkingType = 'adaptive'
     #linkingType = 'velocityPredict'
-    linkingType = 'adaptive + velocityPredict'
+    #linkingType = 'adaptive + velocityPredict'
     maxSearchDistance = 6 #for adaptive search
 
     ##########################################################################
@@ -1113,19 +1169,19 @@ if __name__ == '__main__':
     #STEP 3 link points
     ##########################################################################
 
-    ## LINK USING FLIKA (Kyle's code)
-    fa = start_flika()
+    # ## LINK USING FLIKA (Kyle's code)
+    # fa = start_flika()
+    # ##run linking on all tiffs in directory
+    # linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
+    # fa.close()
 
-    ##run linking on all tiffs in directory
-    linkFiles(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new)
+    # ## LINK USING Kyle's pynsight code outside of Flika
+    linkFilesNoFlika(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, allFiles=allFiles)
 
-    fa.close()
 
-# =============================================================================
-#     # LINK USING TRACKPY
-#     linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)
-#
-# =============================================================================
+    # LINK USING TRACKPY
+    #linkFiles_trackpy(tiffList, skipFrames = gapSize, distanceToLink = distance, pixelSize = pixelSize_new, linkingType=linkingType, maxDistance=maxSearchDistance)
+
 
     ##########################################################################
     ## IMPORT POINTS AND TRACKS FROM JSON (INSTEAD OF PREVIOUS STEPS)

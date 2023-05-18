@@ -52,7 +52,7 @@ def addVelocitytoDF(df):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/peakAnalysis'
+    path = r'/Users/george/Data/linkingError_stackOverflow'
 
     #add nn to SVM files based on id
     fileList = glob.glob(path + '/**/*_NN_diffusion.csv', recursive = True)
