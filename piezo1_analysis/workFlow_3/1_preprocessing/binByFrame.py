@@ -36,29 +36,29 @@ def binTiffUsingFlika(tiffFile, binSize):
     data_window = open_file(tiffFile)
     bin_window = frame_binning(int(binSize), keepSourceWindow=False)
     savename = tiffFile.split('.')[0] + '_bin{}.tif'.format(int(binSize))
-    save_file(savename) 
-    print('saved {}'.format(os.path.basename(savename)))  
+    save_file(savename)
+    print('saved {}'.format(os.path.basename(savename)))
     g.m.clear()
-    
+
 
 def processFolder(path, binSize = 10):
     #get folder paths
     tiffList = glob.glob(path + '/**/*.tif', recursive = True)
-    
+
     for tiffFile in tqdm(tiffList):
         binTiffUsingFlika(tiffFile, binSize)
-              
+
 
 
 if __name__ == '__main__':
     #set top folder level for analysis
-    path = '/Users/george/Data/htag_cutout_wt/bin'
-    
+    path = '/Users/george/Desktop/unbinnedTest'
+
     fa = start_flika()
     processFolder(path)
     fa.close()
 
-    
-    
+
+
 
 

@@ -35,7 +35,7 @@ def addMissingLocsToDF(df, locsDF, pixelSize = 108):
 
 if __name__ == '__main__':
 
-    path = r'/Users/george/Data/linkingError_stackOverflow'
+    path = '/Users/george/Desktop/unbinnedTest'
 
 
     #add nn to SVM files based on id

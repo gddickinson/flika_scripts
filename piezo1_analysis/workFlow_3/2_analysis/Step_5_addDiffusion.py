@@ -50,7 +50,7 @@ def addDiffusiontoDF(df):
 
 if __name__ == '__main__':
 
-    path = r'/Users/george/Data/linkingError_stackOverflow'
+    path = '/Users/george/Desktop/unbinnedTest'
 
     #add nn to SVM files based on id
     fileList = glob.glob(path + '/**/*_SVMPredicted_NN.csv', recursive = True)

@@ -1117,12 +1117,12 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = r'/Users/george/Library/CloudStorage/GoogleDrive-george.dickinson@gmail.com/My Drive/UltraSlow_5ms_DMSO'
+    path = '/Users/george/Desktop/unbinnedTest'
 
     #get folder paths
-    #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
+    tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)
-    tiffList = glob.glob(path + '/**/*.tif', recursive = True)
+    #tiffList = glob.glob(path + '/**/*.tif', recursive = True)
 
     allFiles = glob.glob(path + '/**/*', recursive = True)
 

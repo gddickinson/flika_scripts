@@ -107,7 +107,7 @@ def addNNtoSVMFiles(svmFileList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = r'/Users/george/Data/linkingError_stackOverflow'
+    path = '/Users/george/Desktop/unbinnedTest'
 
 
     #get folder paths
