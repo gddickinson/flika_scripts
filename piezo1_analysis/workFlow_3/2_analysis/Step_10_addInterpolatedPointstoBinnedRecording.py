@@ -66,7 +66,7 @@ def getNNinFrame(tracksDF, radiusList=[3,5,10,20,30]):
         #add results to dataframe
         tracksDF['nnCountInFrame_within_{}_pixels'.format(r)] =  countList
 
-    tracksDF = tracksDF.sort_index()
+    tracksDF = tracksDF.sort_values(['track_number','frame'], ascending=True)
     #print('\r' + 'NNcount-analysis added', end='\r')
 
     return tracksDF
@@ -254,15 +254,232 @@ def addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = 10
     newDF = newDF.append(unlinked)
     return newDF
 
+def getTrackIDs(df, grouping='none'):
+    if grouping == 'none':
+        #return unique IDs
+        return df['track_number'].unique()
+
+    elif grouping == 'in pixel':
+        #combine tracks for SVM3 at same location by rounding XY
+        df['meanXloc'] = round(df.groupby(['track_number'])['x'].transform('mean'),0)
+        df['meanYloc'] = round(df.groupby(['track_number'])['y'].transform('mean'),0)
+
+        tempDF = df[['track_number', 'n_segments', 'meanXloc', 'meanYloc']]
+        tempDF = tempDF.sort_values('n_segments')
+        tempGroup = tempDF.drop_duplicates(subset=['meanXloc','meanYloc'], keep='last').reset_index(drop = True)
+        # this tracklist is used to filter out smaller duplicate fragments at a SVM3 site
+        return tempGroup['track_number'].unique()
+
+    elif grouping == 'hcluster':
+        #use hierarchical clustering to group type 3 sites by distance
+        import scipy.cluster.hierarchy as hcluster
+        thresh = 3
+        data = df[['x','y']].to_numpy()
+        df['cluster'] = hcluster.fclusterdata(data, thresh, criterion="distance")
+        tempDF = df[['track_number', 'n_segments', 'cluster']]
+        tempDF = tempDF.sort_values('n_segments')
+        tempGroup = tempDF.drop_duplicates(subset=['cluster'], keep='last').reset_index(drop = True)
+        # this tracklist is used to filter out smaller duplicate fragments at a SVM3 site
+        return tempGroup['track_number'].unique()
+
+
+def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', grouping='none'):
+    #add blank column to record ROI over meanXY intensity values
+    df['intensity_roiOnMeanXY'] = None
+    df['intensity_roiOnMeanXY - mean roi1'] = None
+    df['intensity_roiOnMeanXY - mean roi1 and black'] = None
+    #remove unlinked points
+    df = df[~df['track_number'].isna()]
+    unlinked = df[df['track_number'].isna()]
+
+    #filter SVM type 3
+    df_mobile = df[df['SVM'] != 3]
+    df = df[df['SVM'] == 3]
+
+    #get SVM3 track_ids
+    trackList = getTrackIDs(df, grouping=grouping)
+
+    #load tiff
+    A = skio.imread(tiffFile)
+    #total length of recording
+    n_frames,w,h = A.shape
+
+    newDF = pd.DataFrame()
+
+
+    for i, track_number in enumerate(trackList):
+        #inititate df to store track results
+        tempDF = pd.DataFrame()
+
+        #get track data
+        trackDF = df[df['track_number'] == int(track_number)]
+
+        # Extract x,y,frame data for each point
+        points = np.column_stack((trackDF['frame'].to_list(), trackDF['x'].to_list(), trackDF['y'].to_list()))
+
+        #interp[olate missing frames
+        interpFrames = range(int(min(points[:,0])), int(max(points[:,0]))+1)
+        xinterp = np.interp(interpFrames, points[:,0], points[:,1])
+        yinterp = np.interp(interpFrames, points[:,0], points[:,2])
+
+        # add frames to ends based on mean site position
+        allFrames = np.array(range(0, n_frames))
+        allX = np.pad(xinterp,(int(min(points[:,0])), n_frames - int(max(points[:,0]))-1), 'mean')
+        allY = np.pad(yinterp,(int(min(points[:,0])), n_frames - int(max(points[:,0]))-1), 'mean')
+
+        points = np.column_stack((allFrames, allX, allY))
+
+        # fit roi over mean site position
+        xVals = np.zeros_like(allX)
+        yVals = np.zeros_like(allY)
+        xVals.fill(np.mean(allX))
+        yVals.fill(np.mean(allY))
+        pointsMeanXY = np.column_stack((allFrames, xVals, yVals))
+
+        #get mean intensities from unbinned tiff
+        intensities = getIntensities(A, points)
+        intensitiesMeanXY = getIntensities(A, pointsMeanXY)
+
+        #populate tempDF
+        tempDF['frame'] = allFrames
+        tempDF['track_number'] = track_number
+        tempDF['x'] = allX
+        tempDF['y'] = allY
+        tempDF['intensity'] = intensities
+        tempDF['intensity_roiOnMeanXY'] = intensitiesMeanXY
+
+        #set positions relative to origin of 0,0
+        minFrame = tempDF['frame'].min()
+        origin_X = float(tempDF[tempDF['frame'] == minFrame]['x'])
+        origin_Y = float(tempDF[tempDF['frame'] == minFrame]['y'])
+        tempDF['zeroed_X'] = tempDF['x'] - origin_X
+        tempDF['zeroed_Y'] = tempDF['y'] - origin_Y
+        #generate lag numbers
+        tempDF['lagNumber'] = tempDF['frame'] - minFrame
+        #calc distance from origin
+        tempDF['distanceFromOrigin'] = np.sqrt(  (np.square(tempDF['zeroed_X']) + np.square(tempDF['zeroed_Y']))   )
+
+        #add differantial for distance
+        diff = np.diff(tempDF['distanceFromOrigin'].to_numpy()) / np.diff(tempDF['lagNumber'].to_numpy())
+        diff = np.insert(diff,0,0)
+        tempDF['dy-dt: distance'] = diff
+
+        #copy over SVM properties
+        props_list = ['radius_gyration', 'asymmetry',
+        'skewness', 'kurtosis','fracDimension', 'netDispl',
+        'Straight', 'Experiment', 'SVM',
+        'nnDist_inFrame']
+
+        for prop in props_list:
+            tempDF[prop] = trackDF[prop].iloc[0]
+
+
+        tempDF['n_segments'] = len(allFrames)
+
+        #add lag props
+        tempDF = addLagDisplacementToDF(tempDF)
+
+        #add background values for each frame
+        for frame, value in enumerate(roi_1):
+            tempDF.loc[tempDF['frame'] == frame, 'roi_1'] = value
+        for frame, value in enumerate(cameraEstimate):
+            tempDF.loc[tempDF['frame'] == frame, 'camera black estimate'] = value
+
+        newDF = newDF.append(tempDF)
+
+
+    #get squared values
+    newDF['d_squared'] = np.square(newDF['distanceFromOrigin'])
+    newDF['lag_squared'] = np.square(newDF['lag'])
+
+    #add delta-t for each lag
+    newDF['dt'] = np.insert(newDF['frame'].to_numpy()[1:],-1,0) - newDF['frame'].to_numpy()
+    newDF['dt'] = newDF['dt'].mask(newDF['dt'] <= 0, None)
+    #instantaneous velocity
+    newDF['velocity'] = newDF['lag']/newDF['dt']
+    #direction relative to 0,0 origin : 360 degreeas
+    degrees = np.arctan2(newDF['zeroed_Y'].to_numpy(), newDF['zeroed_X'].to_numpy())/np.pi*180
+    degrees[degrees < 0] = 360+degrees[degrees < 0]
+    newDF['direction_Relative_To_Origin'] =  degrees
+    #add mean track velocity
+    newDF['meanVelocity'] = newDF.groupby('track_number')['velocity'].transform('mean')
+
+    #add background subtracted intensity
+    newDF['intensity - mean roi1'] = newDF['intensity'] - np.mean(newDF['roi_1'])
+    newDF['intensity - mean roi1 and black'] = newDF['intensity'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
+
+    newDF['intensity_roiOnMeanXY - mean roi1'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1'])
+    newDF['intensity_roiOnMeanXY - mean roi1 and black'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
+
+    #drop intermediate cols
+    newDF = newDF.drop(columns=['x2', 'y2', 'x2-x1_sqr', 'y2-y1_sqr', 'distance', 'mask'])
+
+    #add mobile + unlinked points back
+    unlinked = unlinked[newDF.columns]
+    df_mobile = df_mobile[newDF.columns]
+    if tracksToKeep == 'all':
+        newDF = newDF.append(df_mobile)
+    newDF = newDF.append(unlinked)
+
+    newDF = newDF.sort_values(by='track_number')
+    return newDF
+
+
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/unbinnedTest'
+# =============================================================================
+# #######################################################################################
+# ##### USE THIS SECTION TO ADD INTERPOLATED POINTS TO BINNED/UNBINNED RECORDINGS   #####
+# #######################################################################################
+#
+#     path = '/Users/george/Desktop/unbinnedTest'
+#
+#     #bin size in int
+#     binSize = 10
+#     #this suffix will work if binning done using the script I wrote
+#     binSuffix = '_bin{}'.format(binSize)
+#
+#     #get file names
+#     fileList = glob.glob(path + '/**/*_BGsubtract.csv', recursive = True)
+#
+#     for file in tqdm(fileList):
+#         #load analysis df
+#         df = pd.read_csv(file)
+#         tiffFile_original = os.path.splitext(file)[0].split('_locs')[0] + '.tif'
+#         tiffFile = os.path.splitext(file)[0].split(binSuffix)[0] + '.tif'
+#
+#         roiFileName = 'ROI_' + os.path.basename(file).split('_locs')[0] + '.txt'
+#         roiFolder = os.path.dirname(file)
+#         roiFile = os.path.join(roiFolder,roiFileName)
+#
+#         fa = start_flika()
+#         data_window = open_file(tiffFile)
+#         #get min values for each frame
+#         cameraEstimate = np.min(data_window.image, axis=(1,2))
+#         #load rois
+#         rois = open_rois(roiFile)
+#         #get trace for each roi
+#         roi_1 = rois[0].getTrace()
+#
+#         fa.close()
+#
+#         #add interpolated points
+#         newDF = addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = binSize)
+#
+#         #add NN
+#         newDF = getNNinFrame(newDF)
+#
+#         saveName = os.path.splitext(file)[0]+'_unbinned.csv'
+#         newDF.to_csv(saveName, index=None)
+# =============================================================================
 
-    #bin size in int
-    binSize = 10
-    #this suffix will work if binning done using the script I wrote
-    binSuffix = '_bin{}'.format(binSize)
+
+########################################################################################
+##### USE THIS SECTION TO ADD INTERPOLATED POINTS TO TRAPPED PUNCTA SITES (SVM 3)  #####
+########################################################################################
+
+    path = '/Users/george/Desktop/multipleTrackTest'
 
     #get file names
     fileList = glob.glob(path + '/**/*_BGsubtract.csv', recursive = True)
@@ -270,8 +487,7 @@ if __name__ == '__main__':
     for file in tqdm(fileList):
         #load analysis df
         df = pd.read_csv(file)
-        tiffFile_original = os.path.splitext(file)[0].split('_locs')[0] + '.tif'
-        tiffFile = os.path.splitext(file)[0].split(binSuffix)[0] + '.tif'
+        tiffFile = os.path.splitext(file)[0].split('_locs')[0] + '.tif'
 
         roiFileName = 'ROI_' + os.path.basename(file).split('_locs')[0] + '.txt'
         roiFolder = os.path.dirname(file)
@@ -288,11 +504,16 @@ if __name__ == '__main__':
 
         fa.close()
 
-        #add interpolated points
-        newDF = addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = binSize)
+        #add missing points to trapped sites
+        newDF = addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', grouping='hcluster')
 
         #add NN
         newDF = getNNinFrame(newDF)
 
-        saveName = os.path.splitext(file)[0]+'_unbinned.csv'
+        saveName = os.path.splitext(file)[0]+'_trapped-AllFrames.csv'
         newDF.to_csv(saveName, index=None)
+
+
+
+
+
