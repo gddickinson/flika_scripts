@@ -223,7 +223,7 @@ def addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = 10
         for frame, value in enumerate(cameraEstimate):
             tempDF.loc[tempDF['frame'] == frame, 'camera black estimate'] = value
 
-        newDF = newDF.append(tempDF)
+        newDF = pd.concat([newDF,tempDF])
 
 
     #get squared values
@@ -251,7 +251,7 @@ def addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = 10
 
     #add unlinked points back
     unlinked = unlinked[newDF.columns]
-    newDF = newDF.append(unlinked)
+    newDF = pd.concat([newDF, unlinked])
     return newDF
 
 def getTrackIDs(df, grouping='none'):
@@ -283,11 +283,23 @@ def getTrackIDs(df, grouping='none'):
         return tempGroup['track_number'].unique()
 
 
+def movingaverage(interval, window_size=10):
+    window= np.ones(int(window_size))/float(window_size)
+    smooth = np.convolve(interval, window, 'valid')
+    start= int(((len(interval) - len(smooth)))/2)
+    end = len(interval) - (start + len(smooth))
+    return np.pad(smooth,(start,end),'edge')
+
 def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', grouping='none'):
     #add blank column to record ROI over meanXY intensity values
     df['intensity_roiOnMeanXY'] = None
     df['intensity_roiOnMeanXY - mean roi1'] = None
     df['intensity_roiOnMeanXY - mean roi1 and black'] = None
+
+    df['roi_1 smoothed'] = None
+    df['intensity_roiOnMeanXY - smoothed roi_1'] = None
+    df['intensity - smoothed roi_1'] = None
+
     #remove unlinked points
     df = df[~df['track_number'].isna()]
     unlinked = df[df['track_number'].isna()]
@@ -306,7 +318,7 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
 
     newDF = pd.DataFrame()
 
-
+    #iterate over tracks - add intensity value for every frame in recording
     for i, track_number in enumerate(trackList):
         #inititate df to store track results
         tempDF = pd.DataFrame()
@@ -385,7 +397,15 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
         for frame, value in enumerate(cameraEstimate):
             tempDF.loc[tempDF['frame'] == frame, 'camera black estimate'] = value
 
-        newDF = newDF.append(tempDF)
+        # Smooth the roi1 signal
+        smoothing = int(len(roi_1)/10)
+        smoothed_roi_1 = movingaverage(roi_1, window_size=smoothing)
+
+        for frame, value in enumerate(smoothed_roi_1):
+            tempDF.loc[tempDF['frame'] == frame, 'roi_1 smoothed'] = value
+
+
+        newDF = pd.concat([newDF, tempDF])
 
 
     #get squared values
@@ -404,13 +424,6 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
     #add mean track velocity
     newDF['meanVelocity'] = newDF.groupby('track_number')['velocity'].transform('mean')
 
-    #add background subtracted intensity
-    newDF['intensity - mean roi1'] = newDF['intensity'] - np.mean(newDF['roi_1'])
-    newDF['intensity - mean roi1 and black'] = newDF['intensity'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
-
-    newDF['intensity_roiOnMeanXY - mean roi1'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1'])
-    newDF['intensity_roiOnMeanXY - mean roi1 and black'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
-
     #drop intermediate cols
     newDF = newDF.drop(columns=['x2', 'y2', 'x2-x1_sqr', 'y2-y1_sqr', 'distance', 'mask'])
 
@@ -418,8 +431,18 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
     unlinked = unlinked[newDF.columns]
     df_mobile = df_mobile[newDF.columns]
     if tracksToKeep == 'all':
-        newDF = newDF.append(df_mobile)
-    newDF = newDF.append(unlinked)
+        newDF = pd.concat([newDF, df_mobile])
+    newDF = pd.concat([newDF, unlinked])
+
+    #add background subtracted intensity
+    newDF['intensity - mean roi1'] = newDF['intensity'] - np.mean(newDF['roi_1'])
+    newDF['intensity - mean roi1 and black'] = newDF['intensity'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
+
+    newDF['intensity_roiOnMeanXY - mean roi1'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1'])
+    newDF['intensity_roiOnMeanXY - mean roi1 and black'] = newDF['intensity_roiOnMeanXY'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
+
+    newDF['intensity - smoothed roi_1'] = newDF['intensity'] - newDF['roi_1 smoothed']
+    newDF['intensity_roiOnMeanXY - smoothed roi_1'] = newDF['intensity_roiOnMeanXY'] - newDF['roi_1 smoothed']
 
     newDF = newDF.sort_values(by='track_number')
     return newDF
@@ -479,7 +502,7 @@ if __name__ == '__main__':
 ##### USE THIS SECTION TO ADD INTERPOLATED POINTS TO TRAPPED PUNCTA SITES (SVM 3)  #####
 ########################################################################################
 
-    path = '/Users/george/Desktop/multipleTrackTest'
+    path = '/Users/george/Desktop/testing_2'
 
     #get file names
     fileList = glob.glob(path + '/**/*_BGsubtract.csv', recursive = True)

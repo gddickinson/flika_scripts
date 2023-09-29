@@ -27,7 +27,7 @@ def addNNtoDF(df, nnDF, pixelSize = 108):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/unbinnedTest'
+    path = '/Users/george/Desktop/testing_2'
 
 
     #add nn to SVM files based on id

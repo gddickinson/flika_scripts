@@ -64,7 +64,11 @@ from sklearn import datasets, decomposition, metrics
 from sklearn.svm import SVC
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.decomposition import PCA
-from sklearn.metrics import confusion_matrix, plot_confusion_matrix
+from sklearn.metrics import confusion_matrix
+try:
+    from sklearn.metrics import plot_confusion_matrix
+except:
+    from sklearn.metrics import ConfusionMatrixDisplay as plot_confusion_matrix
 from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedShuffleSplit
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import power_transform, PowerTransformer, StandardScaler
@@ -203,8 +207,8 @@ def flatten(l):
 
 def savetracksCSV(points, filename, locsFileName, noLocsFile=False):
     tracks = points.tracks
-    if isinstance(tracks[0][0], np.int64):
-        tracks = [[np.asscalar(a) for a in b] for b in tracks]
+    if isinstance(tracks[0][0], int):
+        tracks = [[np.ndarray.item(a) for a in b] for b in tracks]
     txy_pts = points.txy_pts.tolist()
 
     txy_intensities = points.intensities
@@ -303,7 +307,7 @@ def savetracksCSV(points, filename, locsFileName, noLocsFile=False):
 
 class Points(object):
     def __init__(self, txy_pts):
-        self.frames = np.unique(txy_pts[:, 0]).astype(np.int)
+        self.frames = np.unique(txy_pts[:, 0]).astype(int)
         self.txy_pts = txy_pts
         self.window = None
         self.pathitems = []
@@ -322,7 +326,7 @@ class Points(object):
             indicies = np.where(self.txy_pts[:, 0] == frame)[0]
             pos = self.txy_pts[indicies, 1:]
             self.pts_by_frame.append(pos)
-            self.pts_remaining.append(np.ones(pos.shape[0], dtype=np.bool))
+            self.pts_remaining.append(np.ones(pos.shape[0], dtype=bool))
             self.pts_idx_by_frame.append(indicies)
 
         tracks = []
@@ -365,7 +369,7 @@ class Points(object):
     def get_tracks_by_frame(self):
         tracks_by_frame = [[] for frame in np.arange(np.max(self.frames)+1)]
         for i, track in enumerate(self.tracks):
-            frames = self.txy_pts[track][:,0].astype(np.int)
+            frames = self.txy_pts[track][:,0].astype(int)
             for frame in frames:
                 tracks_by_frame[frame].append(i)
         self.tracks_by_frame = tracks_by_frame
@@ -1117,12 +1121,12 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = '/Users/george/Desktop/unbinnedTest'
+    path = '/Users/george/Desktop/testing_2'
 
     #get folder paths
-    tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
+    #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
     #tiffList = glob.glob(path + '/**/*_crop200.tif', recursive = True)
-    #tiffList = glob.glob(path + '/**/*.tif', recursive = True)
+    tiffList = glob.glob(path + '/**/*.tif', recursive = True)
 
     allFiles = glob.glob(path + '/**/*', recursive = True)
 
@@ -1209,6 +1213,34 @@ if __name__ == '__main__':
     #run analysis
     #classifyTracks(tracksList, trainpath, level='_cutoff_{}'.format(distance)) #uncomment if running multiple cut off values
     classifyTracks(tracksList, trainpath, level=''.format(distance))
+
+
+    ##########################################################################
+    #STEP 6 If using thunderStorm add 'X [nm]', Y [nm]', 'intensity [photons]' cols, if dropped
+    ##########################################################################
+    #get folder paths
+    fileList = glob.glob(path + '/**/*_SVMPredicted.csv', recursive = True)
+    locsFileList = glob.glob(path + '/**/*_locsID.csv', recursive = True)
+
+    for i,file in enumerate(fileList):
+        # load results file and corresponding locs file
+        resultFile = pd.read_csv(file)
+        locsFile = pd.read_csv(locsFileList[i])[['id','x [nm]','y [nm]','intensity [photon]']]
+
+        #join tables based on id
+        joinDF = resultFile.merge(locsFile, on='id', how='inner')
+
+        #overwrite result file with merged table
+        joinDF.to_csv(file)
+
+
+
+
+
+
+
+
+
 
 
 

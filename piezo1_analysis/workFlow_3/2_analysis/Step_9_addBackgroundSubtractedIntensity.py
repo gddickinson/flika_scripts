@@ -85,7 +85,7 @@ def addBgSubtractedIntensity(df, tiffFile, roi_1, cameraEstimate):
 
 if __name__ == '__main__':
 
-    path = r'/Users/george/Desktop/testing'
+    path = '/Users/george/Desktop/testing_2'
 
     #add nn count
     fileList = glob.glob(path + '/**/*_NNcount.csv', recursive = True)

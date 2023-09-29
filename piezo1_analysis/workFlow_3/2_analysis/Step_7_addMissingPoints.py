@@ -28,14 +28,14 @@ def addMissingLocsToDF(df, locsDF, pixelSize = 108):
         missingLocs = locsDF[~locsDF['id'].isin(IDlist)]
 
         #append df
-        df = df.append(missingLocs)
+        df = pd.concat([df,missingLocs])
 
         return df
 
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/unbinnedTest'
+    path = '/Users/george/Desktop/testing_2'
 
 
     #add nn to SVM files based on id

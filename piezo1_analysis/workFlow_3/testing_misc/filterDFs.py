@@ -15,38 +15,44 @@ from tqdm import tqdm
 import os, glob
 
 
-def filterDF(df, colName, filterValue, filterOp):
-    if filterOp == 'Over':
-        filteredDF = df[df['{}'.format(colName)] > filterValue]
-    if filterOp == 'Under':
-        filteredDF = df[df['{}'.format(colName)] < filterValue]
-    if filterOp == 'Equals':
-        filteredDF = df[df['{}'.format(colName)] == filterValue]    
-    if filterOp == 'NotEqual':
-        filteredDF = df[df['{}'.format(colName)] != filterValue]  
-    
+def filterDF(df, colName, filterOp, filterValue1=None, filterValue2=None):
+    if filterOp == 'over':
+        filteredDF = df[df['{}'.format(colName)] > filterValue1]
+    if filterOp == 'under':
+        filteredDF = df[df['{}'.format(colName)] < filterValue1]
+    if filterOp == 'equals':
+        filteredDF = df[df['{}'.format(colName)] == filterValue1]
+    if filterOp == 'notequal':
+        filteredDF = df[df['{}'.format(colName)] != filterValue1]
+    if filterOp == 'between':
+        filteredDF = df[(df['{}'.format(colName)] > filterValue1) & (df['{}'.format(colName)] < filterValue2)]
+
     return filteredDF
-        
+
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Data/testing'
-    
-    colName = 'n_segments'
-    filterValue = 10
-    filterOp = 'Over'
-    
+    path = '/Users/george/Desktop/filterTest'
+
+    colName = 'intensity [photon]'
+    filterValue1 = 50
+    filterValue2 = 100
+    filterOp = 'between'
+
     #get filenames for all files to filter under path folder
-    fileList = glob.glob(path + '/**/*_NNcount.csv', recursive = True)     
-    
-    for file in tqdm(fileList): 
-        
+    fileList = glob.glob(path + '/**/*_locs.csv', recursive = True)
+
+    for file in tqdm(fileList):
+
         df = pd.read_csv(file)
-        
-        filteredDF = filterDF(df, colName, filterValue, filterOp)
-        
-        saveName = os.path.splitext(file)[0]+'_{}{}{}.csv'.format(colName, filterOp, filterValue)
+
+        filteredDF = filterDF(df, colName, filterOp, filterValue1, filterValue2)
+
+        if filterValue2 == None:
+            saveName = os.path.splitext(file)[0]+'_{}{}{}.csv'.format(colName, filterOp, filterValue1)
+        else:
+            saveName = os.path.splitext(file)[0]+'_{}{}{}-{}.csv'.format(colName, filterOp, filterValue1, filterValue2)
         #if you want to overwrite the file uncomment line below
         #saveName = file
-        
+
         filteredDF.to_csv(saveName, index=None)

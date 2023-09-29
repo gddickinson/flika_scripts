@@ -69,7 +69,7 @@ def getNNinFrame(tracksDF, radiusList=[3,5,10,20,30]):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/unbinnedTest'
+    path = '/Users/george/Desktop/testing_2'
 
     #add nn count
     fileList = glob.glob(path + '/**/*_velocity_AllLocs.csv', recursive = True)

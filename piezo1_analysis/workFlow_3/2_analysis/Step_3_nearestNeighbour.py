@@ -107,7 +107,7 @@ def addNNtoSVMFiles(svmFileList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = '/Users/george/Desktop/unbinnedTest'
+    path = '/Users/george/Desktop/testing_2'
 
 
     #get folder paths
