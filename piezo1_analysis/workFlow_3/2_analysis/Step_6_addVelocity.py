@@ -52,7 +52,8 @@ def addVelocitytoDF(df):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/testing_2'
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
+    #path = '/Users/george/Data/gabby_missingIntensities'
 
     #add nn to SVM files based on id
     fileList = glob.glob(path + '/**/*_NN_diffusion.csv', recursive = True)

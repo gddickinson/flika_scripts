@@ -107,8 +107,8 @@ def addNNtoSVMFiles(svmFileList):
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = '/Users/george/Desktop/testing_2'
-
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
+    #path = '/Users/george/Data/gabby_missingIntensities'
 
     #get folder paths
     tracksList = glob.glob(path + '/**/*_locsID.csv', recursive = True)   #using locs file to measure distances to all detected locs (some removed during linking/feature calc if tracks too short)

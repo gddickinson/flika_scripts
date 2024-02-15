@@ -706,7 +706,7 @@ def getNN(tracksDF):
 def getIntensities(dataArray, pts):
     #intensities retrieved from image stack using point data (converted from floats to ints)
 
-    n, w, h = dataArray.shape
+    n, w, h = dataArray.shape #!TODO check w and h are right way around - maybe transposed from flika import (only affects edge cases)
 
     #clear intensity list
     intensities = []
@@ -1121,7 +1121,9 @@ def linkFiles_trackpy(tiffList, pixelSize = 0.108, skipFrames = 1, distanceToLin
 
 if __name__ == '__main__':
     ##### RUN ANALYSIS
-    path = '/Users/george/Desktop/testing_2'
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
+    #path = '/Users/george/Data/test'
+    #path = '/Users/george/Data/gabby_missingIntensities'
 
     #get folder paths
     #tiffList = glob.glob(path + '/**/*_bin10.tif', recursive = True)
@@ -1135,7 +1137,7 @@ if __name__ == '__main__':
 
     #minimum number of link segments (need at least 2 to avoid colinearity in feature calc)
     #minLinkSegments = 2
-    minLinkSegments = 4    #gabby
+    minLinkSegments = 6    #gabby
 
     #max number of gap frames to skip
     #gapSize = 2

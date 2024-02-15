@@ -27,8 +27,8 @@ def addNNtoDF(df, nnDF, pixelSize = 108):
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/testing_2'
-
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
+    #path = '/Users/george/Data/gabby_missingIntensities'
 
     #add nn to SVM files based on id
     dfFileList = glob.glob(path + '/**/*_locsID_tracksRG_SVMPredicted.csv', recursive = True)

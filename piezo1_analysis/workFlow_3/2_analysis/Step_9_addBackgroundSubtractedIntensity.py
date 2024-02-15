@@ -30,62 +30,24 @@ else:
 
 from flika import start_flika
 
-def getIntensities(A, df):
-    #intensities retrieved from image stack using point data (converted from floats to ints)
-
-    n, w, h = A.shape
-
-    #clear intensity list
-    intensities = []
-
-    for i in tqdm(range(len(df))):
-        frame = round(df['frame'][i])
-        x = round(df['x'][i])
-        y = round(df['y'][i])
-
-        #set x,y bounds for 3x3 pixel square
-        xMin = x - 1
-        xMax = x + 2
-
-        yMin = y - 1
-        yMax = y + 2
-
-        #deal with edge cases
-        if xMin < 0:
-            xMin = 0
-        if xMax > w:
-            xMax = w
-
-        if yMin <0:
-            yMin = 0
-        if yMax > h:
-            yMax = h
-
-        #get mean pixels values for 3x3 square
-        intensities.append(np.mean(A[frame][yMin:yMax,xMin:xMax]))
-
-    df['intensity'] = intensities
-
-    return df
 
 def addBgSubtractedIntensity(df, tiffFile, roi_1, cameraEstimate):
-    newDF = getIntensities(tiffFile, df)
-
     #add background values for each frame
     for frame, value in enumerate(roi_1):
-        newDF.loc[df['frame'] == frame, 'roi_1'] = value
+        df.loc[df['frame'] == frame, 'roi_1'] = value
 
     for frame, value in enumerate(cameraEstimate):
-        newDF.loc[df['frame'] == frame, 'camera black estimate'] = value
+        df.loc[df['frame'] == frame, 'camera black estimate'] = value
 
     #add background subtracted intensity
-    newDF['intensity - mean roi1'] = newDF['intensity'] - np.mean(newDF['roi_1'])
-    newDF['intensity - mean roi1 and black'] = newDF['intensity'] - np.mean(newDF['roi_1']) - np.mean(newDF['camera black estimate'])
-    return newDF
+    df['intensity - mean roi1'] = df['intensity'] - np.mean(df['roi_1'])
+    df['intensity - mean roi1 and black'] = df['intensity'] - np.mean(df['roi_1']) - np.mean(df['camera black estimate'])
+    return df
 
 if __name__ == '__main__':
 
-    path = '/Users/george/Desktop/testing_2'
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
+    #path = '/Users/george/Data/gabby_missingIntensities'
 
     #add nn count
     fileList = glob.glob(path + '/**/*_NNcount.csv', recursive = True)

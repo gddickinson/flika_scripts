@@ -74,7 +74,7 @@ def getNNinFrame(tracksDF, radiusList=[3,5,10,20,30]):
 def getIntensities(dataArray, pts):
     #intensities retrieved from image stack using point data (converted from floats to ints)
 
-    n, w, h = dataArray.shape
+    n, h, w = dataArray.shape
 
     #clear intensity list
     intensities = []
@@ -313,6 +313,7 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
 
     #load tiff
     A = skio.imread(tiffFile)
+
     #total length of recording
     n_frames,w,h = A.shape
 
@@ -502,7 +503,7 @@ if __name__ == '__main__':
 ##### USE THIS SECTION TO ADD INTERPOLATED POINTS TO TRAPPED PUNCTA SITES (SVM 3)  #####
 ########################################################################################
 
-    path = '/Users/george/Desktop/testing_2'
+    path = '/Users/george/Data/MCS_04_20230906_BAPTA_NSC66_5uM_UltraQuiet_FOV56_1'
 
     #get file names
     fileList = glob.glob(path + '/**/*_BGsubtract.csv', recursive = True)
