@@ -82,18 +82,16 @@ if __name__ == '__main__':
         #Add distance to nearrest actin pixel center
         newDF = addDistanceToActin(df, actin_x,actin_y)
 
-# =============================================================================
-#         ## UNCOMMENT TO DISPLAY ACTIN AND PUNCTA XY POS OVERLAID ON BINARY
-#         # Plot the binary
-#         plt.imshow(binArray)
-#         # Plot the actin xy points
-#         plt.scatter(actin_y, actin_x, c='red')
-#         #plot puncta
-#         #plt.scatter(df['x'], df['y'], c='blue')
-#         plt.scatter(newDF['x'], newDF['y'], c=newDF['distanceToActin'], cmap='plasma')
-#         # Display the plot
-#         plt.show()
-# =============================================================================
+        ### UNCOMMENT TO DISPLAY ACTIN AND PUNCTA XY POS OVERLAID ON BINARY
+        # # Plot the binary
+        # plt.imshow(binArray)
+        # # Plot the actin xy points
+        # plt.scatter(actin_y, actin_x, c='red')
+        # #plot puncta
+        # #plt.scatter(df['x'], df['y'], c='blue')
+        # plt.scatter(newDF['x'], newDF['y'], c=newDF['distanceToActin'], cmap='plasma', vmin=0.5, vmax=10)
+        # # Display the plot
+        # plt.show()
 
         #save new df
         saveName = os.path.splitext(file)[0]+'_ActinDist.csv'
