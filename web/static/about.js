@@ -17,8 +17,6 @@ route('about', async () => {
     <li>Every script is parsed with Python's <code>ast</code>: the purpose comes only from its docstring and header comments;
       settable values are top-level literal assignments; inputs and outputs are calls such as <code>read_csv</code> or
       <code>to_csv</code>; FLIKA steps are calls to FLIKA process functions.</li>
-    <li>The ${s.duplicates} Finder copies named "name 2.py" are byte-identical to their originals and are listed on the
-      original's page.</li>
     <li>${s.shared_functions} functions appear with identical code in more than one script; each copy links to the others.</li>
     <li>Topics are the only hand-made grouping, by folder and file name.</li>
     <li>The demos are JavaScript ports, tested in node against the Python functions loaded from the script files.</li>

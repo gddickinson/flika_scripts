@@ -20,7 +20,6 @@ route('home', async () => {
     <div class="tile"><b>${s.lines.toLocaleString()}</b><span>lines of code</span></div>
     <div class="tile"><b>${s.functions}</b><span>functions</span></div>
     <div class="tile"><b>${s.shared_functions}</b><span>functions copied between scripts</span></div>
-    <div class="tile"><b>${s.duplicates}</b><span>Finder copies ("name 2.py") folded in</span></div>
     <div class="tile"><b>${s.demos}</b><span>interactive demos</span></div>
   </div>
   <h2>Where they run</h2>

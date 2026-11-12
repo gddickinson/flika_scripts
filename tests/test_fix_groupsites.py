@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 
 from web.script_loader import load_functions  # noqa: E402
 
-SCRIPTS = [ROOT / "2014.09.19 Regroup by Radius.py", ROOT / "2014.09.19 Regroup by Radius 2.py"]
+SCRIPTS = [ROOT / "2014.09.19 Regroup by Radius.py"]
 
 
 def group(path, puffs, radius):

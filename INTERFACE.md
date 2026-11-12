@@ -8,7 +8,6 @@
 | `piezo1_analysis/workFlow_2/` | workflow 2 (Step_1 ... Step_17); `old/` superseded steps; `training_data/` SVM feature table |
 | `piezo1_analysis/workFlow_3/` | workflow 3: `1_preprocessing/`, `2_analysis/` (Step_1 ... Step_12), `3_postprocessing/`, `testing_misc/` |
 | `peakAnalysis/` | collaborator analyses (forLuca, forMike) |
-| `* 2.py` etc. | byte-identical macOS Finder copies; the catalogue folds them into the original |
 
 Track-feature functions (`RadiusGyrationAsymmetrySkewnessKurtosis`, `FractalDimension`, `NetDisplacementEfficiency`,
 `SummedSinesCosines`) are copied, identically, into many workflow scripts; each script page links the copies.
