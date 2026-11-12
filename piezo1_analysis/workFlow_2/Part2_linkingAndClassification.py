@@ -486,7 +486,7 @@ def SummedSinesCosines(points_array):
     ab = points_set_b - points_set_a
     bc = points_set_c - points_set_b
     # Evaluate sin and cos values
-    cross_products = np.cross(ab, bc)
+    cross_products = ab[:, 0] * bc[:, 1] - ab[:, 1] * bc[:, 0]  # 2D cross product (np.cross of 2-vectors fails in NumPy 2)
     dot_products = np.einsum('ij,ij->i', ab, bc)
     product_magnitudes_ab_bc = np.linalg.norm(ab, axis=1) * np.linalg.norm(bc, axis=1)
     cos_vals = dot_products / product_magnitudes_ab_bc

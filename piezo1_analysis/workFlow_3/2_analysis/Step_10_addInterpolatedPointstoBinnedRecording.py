@@ -189,8 +189,8 @@ def addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = 10
 
         #set positions relative to origin of 0,0
         minFrame = tempDF['frame'].min()
-        origin_X = float(tempDF[tempDF['frame'] == minFrame]['x'])
-        origin_Y = float(tempDF[tempDF['frame'] == minFrame]['y'])
+        origin_X = float(tempDF[tempDF['frame'] == minFrame]['x'].iloc[0])
+        origin_Y = float(tempDF[tempDF['frame'] == minFrame]['y'].iloc[0])
         tempDF['zeroed_X'] = tempDF['x'] - origin_X
         tempDF['zeroed_Y'] = tempDF['y'] - origin_Y
         #generate lag numbers
@@ -363,8 +363,8 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
 
         #set positions relative to origin of 0,0
         minFrame = tempDF['frame'].min()
-        origin_X = float(tempDF[tempDF['frame'] == minFrame]['x'])
-        origin_Y = float(tempDF[tempDF['frame'] == minFrame]['y'])
+        origin_X = float(tempDF[tempDF['frame'] == minFrame]['x'].iloc[0])
+        origin_Y = float(tempDF[tempDF['frame'] == minFrame]['y'].iloc[0])
         tempDF['zeroed_X'] = tempDF['x'] - origin_X
         tempDF['zeroed_Y'] = tempDF['y'] - origin_Y
         #generate lag numbers
