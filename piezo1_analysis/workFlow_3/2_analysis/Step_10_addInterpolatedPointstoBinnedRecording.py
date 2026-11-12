@@ -231,7 +231,7 @@ def addPointsToUnbinnedTracks(df, tiffFile, roi_1, cameraEstimate, bin_size = 10
     newDF['lag_squared'] = np.square(newDF['lag'])
 
     #add delta-t for each lag
-    newDF['dt'] = np.insert(newDF['frame'].to_numpy()[1:],-1,0) - newDF['frame'].to_numpy()
+    newDF['dt'] = np.append(newDF['frame'].to_numpy()[1:], 0) - newDF['frame'].to_numpy()
     newDF['dt'] = newDF['dt'].mask(newDF['dt'] <= 0, None)
     #instantaneous velocity
     newDF['velocity'] = newDF['lag']/newDF['dt']
@@ -414,7 +414,7 @@ def addMissingPoints(df, tiffFile, roi_1, cameraEstimate, tracksToKeep='all', gr
     newDF['lag_squared'] = np.square(newDF['lag'])
 
     #add delta-t for each lag
-    newDF['dt'] = np.insert(newDF['frame'].to_numpy()[1:],-1,0) - newDF['frame'].to_numpy()
+    newDF['dt'] = np.append(newDF['frame'].to_numpy()[1:], 0) - newDF['frame'].to_numpy()
     newDF['dt'] = newDF['dt'].mask(newDF['dt'] <= 0, None)
     #instantaneous velocity
     newDF['velocity'] = newDF['lag']/newDF['dt']
