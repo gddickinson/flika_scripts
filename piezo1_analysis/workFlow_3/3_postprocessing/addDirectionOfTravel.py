@@ -42,7 +42,8 @@ def calculate_direction(x1, y1, x2, y2):
 def calculate_directional_persistence(angles):
     """
     Calculate directional persistence from a series of movement angles.
-    Returns a value between 0 (random) and 1 (straight line).
+    Returns a value between 0 (every step reverses direction) and 1 (straight line);
+    directions with no correlation between steps give about 0.5.
     """
     if len(angles) < 2 or np.isnan(angles).all():
         return float('nan')
@@ -62,10 +63,10 @@ def calculate_directional_persistence(angles):
             diff = 360 - diff
         angle_diffs.append(diff)
 
-    # Average the angular differences (0 means perfectly straight, 180 means completely random)
+    # Average the angular differences (0 means perfectly straight, 180 means every step reverses, ~90 for uncorrelated directions)
     avg_diff = np.mean(angle_diffs)
 
-    # Convert to persistence (1 means straight line, 0 means random)
+    # Convert to persistence (1 means straight line, 0 means every step reverses, ~0.5 for uncorrelated directions)
     persistence = 1 - (avg_diff / 180)
 
     return persistence

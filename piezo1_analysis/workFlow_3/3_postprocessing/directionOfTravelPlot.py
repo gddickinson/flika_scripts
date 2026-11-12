@@ -328,7 +328,7 @@ class TrackVisualizerApp:
                                 diff = 360 - diff
                             angle_diffs.append(diff)
 
-                        # Calculate persistence (1 means straight line, 0 means random)
+                        # Calculate persistence (1 means straight line, 0 means every step reverses, ~0.5 for uncorrelated directions)
                         persistence = 1 - (np.mean(angle_diffs) / 180)
 
                         # Update all rows for this track
