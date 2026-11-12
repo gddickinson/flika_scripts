@@ -470,6 +470,7 @@ def RadiusGyrationAsymmetrySkewnessKurtosis(trackDF):
     normed_points = points_array - center[None, :]
     radiusGyration_tensor = np.einsum('im,in->mn', normed_points, normed_points)/len(points_array)
     eig_values, eig_vectors = np.linalg.eig(radiusGyration_tensor)
+    eig_values, eig_vectors = eig_values.real, eig_vectors.real  # NumPy >= 2.5 eig() returns complex
     radius_gyration_value = np.sqrt(np.sum(eig_values))
     asymmetry_numerator = pow((eig_values[0] - eig_values[1]), 2)
     asymmetry_denominator = 2 * (pow((eig_values[0] + eig_values[1]), 2))

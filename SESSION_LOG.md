@@ -15,6 +15,8 @@
   - NumPy 2 / pandas 3: `np.cross` of 2-vectors (error in NumPy 2.5) replaced by the explicit 2D cross product in 10
     copies of SummedSinesCosines; `float(df[...]['x'])` (removed in pandas 3.0, which flika_new has) now `.iloc[0]`.
   - addDirectionOfTravel docstring said persistence 0 means random; uncorrelated directions give ~0.5.
+  - NumPy >= 2.5: np.linalg.eig returns complex, so Rg/skewness/kurtosis became complex. The 9 copies now take
+    `.real` of eig's output (identical on 2.4.2, checked in flika_new). eigh was not used: it flips the dominant
+    eigenvector and so the sign of every skewness value (checked on the demo fixture).
 - Needs George: groupSites (2014 Regroup by Radius) can put a puff in two sites when a neighbourhood touches two
-  existing sites (demo shows it); NumPy >= 2.5 makes np.linalg.eig return complex, so Rg/skewness columns would be
-  complex there (flika_new has 2.4.2, unaffected).
+  existing sites (demo shows it).
