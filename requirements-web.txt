@@ -1,0 +1,11 @@
+# Web catalogue (FastAPI) and its tests. The catalogue itself needs only the first four;
+# numpy..tqdm are for tests/test_demos.py and tests/test_script_fixes.py, which run the scripts' own functions.
+fastapi==0.162.2
+httpx==0.28.1
+pytest==9.2.0
+uvicorn==0.54.0
+numpy==2.5.4
+pandas==3.1.1
+scipy==1.18.1
+scikit-learn==1.9.1
+tqdm==4.67.1

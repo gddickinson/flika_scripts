@@ -1,2 +1,7 @@
 .DS_Store
 piezo1_analysis/.DS_Store
+
+# web catalogue
+site/
+__pycache__/
+.pytest_cache/
