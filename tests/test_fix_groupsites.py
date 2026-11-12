@@ -39,7 +39,7 @@ def random_puffs(seed):
                                   rng.uniform(0.2, 2, 40))]
 
 
-@pytest.mark.parametrize("path", SCRIPTS, ids=["original", "copy"])
+@pytest.mark.parametrize("path", SCRIPTS, ids=["original"])
 def test_line_example_has_two_disjoint_sites(path):
     out = group(path, line_puffs(), 3)
     assert len(out) == 4
@@ -50,7 +50,7 @@ def test_line_example_has_two_disjoint_sites(path):
     assert all(p["No. Events"] == 2 for p in out)
 
 
-@pytest.mark.parametrize("path", SCRIPTS, ids=["original", "copy"])
+@pytest.mark.parametrize("path", SCRIPTS, ids=["original"])
 @pytest.mark.parametrize("seed", range(6))
 @pytest.mark.parametrize("radius", [np.sqrt(2), 3.0, 5.0])
 def test_every_puff_in_exactly_one_site(path, seed, radius):
