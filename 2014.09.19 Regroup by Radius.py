@@ -31,6 +31,12 @@ radius=3
 
 
 def groupSites(puff_info,radius=np.sqrt(2)):
+    # Each puff belongs to exactly one site. Puffs are visited in order; a puff's neighbourhood (puffs within
+    # `radius`, itself included) starts a new site if none of its puffs is in a site yet. Otherwise each of its puffs
+    # that is not yet in a site joins the touched site whose centre (mean x, y of its members before this neighbourhood) is
+    # nearest to that puff, ties going to the earlier site; puffs already in a site stay there. (Before 2026-11 the whole
+    # neighbourhood was added to the first touched site, so a puff could be in two sites and be written twice.)
+    nPuffs=len(puff_info)
     distances=np.zeros((nPuffs,nPuffs))
     for i in np.arange(nPuffs):
         x0,y0=(puff_info[i]['x'],puff_info[i]['y'])
@@ -46,8 +52,12 @@ def groupSites(puff_info,radius=np.sqrt(2)):
             sites.append(p)
             sitesAdded=sitesAdded.union(p)
         else:
-            idx=[sites.index(site) for site in sites if len(site.intersection(p))>0][0]
-            sites[idx]=sites[idx].union(p)
+            touched=[k for k,site in enumerate(sites) if len(site.intersection(p))>0]
+            centres={k:np.mean([[puff_info[s]['x'],puff_info[s]['y']] for s in sites[k]],0) for k in touched}
+            for s in sorted(p-sitesAdded):
+                xy=np.array([puff_info[s]['x'],puff_info[s]['y']])
+                d=[np.sqrt(np.sum((centres[k]-xy)**2)) for k in touched]
+                sites[touched[int(np.argmin(d))]].add(s)
             sitesAdded=sitesAdded.union(p)
     i=1
     new_puff_info=[]

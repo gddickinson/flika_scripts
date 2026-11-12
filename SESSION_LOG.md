@@ -18,5 +18,20 @@
   - NumPy >= 2.5: np.linalg.eig returns complex, so Rg/skewness/kurtosis became complex. The 9 copies now take
     `.real` of eig's output (identical on 2.4.2, checked in flika_new). eigh was not used: it flips the dominant
     eigenvector and so the sign of every skewness value (checked on the demo fixture).
-- Needs George: groupSites (2014 Regroup by Radius) can put a puff in two sites when a neighbourhood touches two
+- (Resolved below) Needs George: groupSites (2014 Regroup by Radius) can put a puff in two sites when a neighbourhood touches two
   existing sites (demo shows it).
+
+## 2026-11-12: follow-up (George approved fixing groupSites)
+- groupSites (2014 Regroup by Radius, both byte-identical copies): a puff whose neighbourhood touched two existing
+  sites was added to the first of them while staying in the second, so it was in two sites, the output had more rows
+  than puffs and the script wrote some puffs twice and dropped others. Now each puff is in exactly one site: puffs
+  already in a site stay; each unassigned puff in the neighbourhood joins the touched site whose centre (mean x, y
+  before this neighbourhood) is nearest, ties to the earlier site. Sites are not merged (single linkage would chain
+  neighbouring sites into one). It also uses len(puff_info) instead of the global nPuffs. No parameter: the rule is
+  not experiment-specific. Results change only for inputs that hit the old overlap. Regression test
+  tests/test_fix_groupsites.py (30 of 39 failed before). JS port, fixture (adds the four-puffs-on-a-line case), node
+  test and the demo page updated; the "puff in two sites" warning is gone.
+- eig follow-up was already done in 47f67c4 (.real; eigh/eigvalsh rejected because skewness needs the eigenvector
+  and eigh flips its sign); re-checked on NumPy 2.5.4 (shared venv) and 2.4 (flika_new).
+- Frame interval: no open item for this repo. Velocities in the scripts are px/frame (lag / frame difference) and
+  the web demo labels them so; no frame-interval setting was added, so saved columns keep their units.

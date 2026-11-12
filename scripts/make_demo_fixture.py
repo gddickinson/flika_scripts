@@ -133,7 +133,11 @@ def site_cases(path: Path) -> list[dict]:
         keys = ["x", "y", "t_peak", "Amplitude", "Group #", "Group x", "Group y", "No. Events", "Max Amp",
                 "Amplitude Normalized by Site Mean", "Amplitude Normalized by Fitted Line"]
         out.append({"radius": radius, "result": [{k: p[k] for k in keys} for p in res]})
-    return {"puffs": puffs, "runs": out}
+    line = [{"x": 20.0 + 3 * x, "y": 20.0, "t_peak": 100.0 * i, "Amplitude": 1 + i / 4} for i, x in enumerate([0, 3, 1, 2])]
+    f = load_functions(path, ["groupSites"], {"nPuffs": len(line)})["groupSites"]
+    line_run = {"radius": 3.0, "result": [{k: p[k] for k in keys} for p in f([dict(p) for p in line], 3.0)]}
+    # line: four puffs 3 px apart, listed 1st, 4th, 2nd, 3rd along the line; puff 2's neighbourhood touches two sites
+    return {"puffs": puffs, "runs": out, "line": {"puffs": line, "run": line_run}}
 
 
 def smoothing_cases(f) -> list[dict]:
