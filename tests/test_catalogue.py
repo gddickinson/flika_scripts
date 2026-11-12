@@ -11,12 +11,11 @@ from web.parse_script import comments, parse_python  # noqa: E402
 CAT = catalogue()
 
 
-def test_counts_and_duplicates():
+def test_counts_and_no_finder_copies():
     s = stats(CAT)
-    assert s["scripts"] >= 150 and s["duplicates"] >= 40
-    # every Finder copy "x 2.py" is folded into its original, never a page of its own
+    assert s["scripts"] >= 150
+    # the byte-identical Finder copies ("x 2.py") were deleted; none may come back as pages
     assert not any(" 2." in e["path"] or e["path"].endswith(" 2") for e in CAT["scripts"].values())
-    assert any(e["duplicates"] for e in CAT["scripts"].values())
 
 
 def test_every_script_has_topic_and_parses():

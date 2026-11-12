@@ -65,6 +65,3 @@ def test_every_puff_in_exactly_one_site(path, seed, radius):
         gx = np.mean([p["x"] for p in members])
         assert all(np.isclose(p["Group x"], gx) for p in members)
 
-
-def test_copies_identical():
-    assert SCRIPTS[0].read_bytes() == SCRIPTS[1].read_bytes()
