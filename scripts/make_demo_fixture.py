@@ -151,7 +151,7 @@ def build() -> dict:
 
 def main():
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(build(), indent=1))
+    OUT.write_text(json.dumps(build(), separators=(",", ":")) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 
